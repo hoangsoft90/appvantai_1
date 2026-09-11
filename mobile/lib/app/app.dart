@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/config/app_config.dart';
 import '../feature/auth/application/auth_controller.dart';
+import '../shared/widgets/app_open_ad_listener.dart';
 import '../shared/widgets/splash_screen.dart';
 import 'router/app_router.dart';
 import 'theme/app_theme.dart';
@@ -26,11 +27,14 @@ class App extends ConsumerWidget {
     }
 
     final router = ref.watch(routerProvider);
-    return MaterialApp.router(
-      title: AppConfig.appName,
-      theme: AppTheme.light(),
-      debugShowCheckedModeBanner: false,
-      routerConfig: router,
+    // AppOpenAdListener: App Open ad khi cold start / resume (vô hình, ads là phụ trợ).
+    return AppOpenAdListener(
+      child: MaterialApp.router(
+        title: AppConfig.appName,
+        theme: AppTheme.light(),
+        debugShowCheckedModeBanner: false,
+        routerConfig: router,
+      ),
     );
   }
 }
