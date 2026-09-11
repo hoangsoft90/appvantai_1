@@ -55,6 +55,13 @@ jobs:
         working-directory: mobile
         run: flutter pub get
 
+      # BẮT BUỘC: *.g.dart (riverpod_generator) bị gitignore theo convention —
+      # checkout sạch sẽ không có chúng → thiếu _$AuthController/authControllerProvider
+      # → kernel_snapshot fail hàng loạt (bài học run 34584116987).
+      - name: Codegen (build_runner)
+        working-directory: mobile
+        run: dart run build_runner build --delete-conflicting-outputs
+
       # Gradle trực tiếp qua wrapper (task assembleDebug) — đúng yêu cầu
       # "dùng gradle trực tiếp, không cần token EAS".
       # dart-defines dạng Flutter chuẩn (comma-separated base64 từng cặp KEY=VALUE):

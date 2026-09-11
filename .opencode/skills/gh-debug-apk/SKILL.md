@@ -66,6 +66,11 @@ curl -s -H "Authorization: token <TOKEN>" \
 - `plugins {}` của app PHẢI có `id("org.jetbrains.kotlin.android")` vì gradle.properties
   đặt `android.builtInKotlin=false` (template Flutter — external KGP 2.4.0 trong
   settings.gradle.kts). Thiếu → `kotlin {}` block chết.
+- **CI PHẢI chạy `dart run build_runner build --delete-conflicting-outputs` sau `pub get`**:
+  `*.g.dart` (riverpod providers) bị gitignore (`*.g.dart` trong root .gitignore) —
+  checkout sạch không có → `kernel_snapshot` fail `Type '_$X' not found` hàng loạt
+  (run 34584116987). `flutter test` local vẫn pass vì .g.dart tồn tại trên đĩa local —
+  đừng nhầm là code OK trên CI.
 - **Guard fail-fast release PHẢI hook `gradle.taskGraph.whenReady`, KHÔNG throw trong
   `buildTypes.release {}`** — block đó được evaluate eagerly lúc cấu hình cho MỌI build
   (kể cả assembleDebug) → guard cũ từ fix_p7_1 từng kill cả debug build (run
