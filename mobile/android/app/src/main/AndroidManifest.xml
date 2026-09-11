@@ -13,6 +13,13 @@
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="true">
+        <!-- AdMob App ID (bắt buộc khai báo platform-level, không qua dart-define).
+             Unit IDs (banner/interstitial/app-open) chọn test/real qua flag TEST_ADS
+             trong lib/core/config/admob_config.dart — thiếu app ID này app CRASH khi
+             init Mobile Ads SDK. -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-6917313063209470~9914050394"/>
         <!-- usesCleartextTraffic=true (2026-09): cho phép HTTP với mọi domain —
              dev/test gọi API http://localhost:8787 hay IP nội bộ không bị chặn
              bởi network security config mặc định của API 28+. HTTPS vẫn được

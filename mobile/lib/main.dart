@@ -6,6 +6,8 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 import 'app/app.dart';
 import 'core/config/app_auth_mode.dart';
 import 'core/config/app_config.dart';
+import 'core/config/admob_config.dart';
+import 'shared/services/ads_service.dart';
 
 /// DSN Sentry truyền qua dart-define:
 ///   --dart-define=SENTRY_DSN=https://xxx@oxxx.ingest.us.sentry.io/xxxx
@@ -18,6 +20,8 @@ Future<void> main() async {
   AppConfig.assertReleaseConfig();
   // phase7 §7.1: fail-fast nếu bật Firebase mà thiếu config dart-define.
   AppAuthMode.assertFirebaseConfigIfEnabled();
+  // AdMob: TEST_ADS=false mà thiếu unit ID thật → chặn ngay (tránh NO_FILL khó debug).
+  AdmobConfig.assertProductionConfig();
 
   await SentryFlutter.init(
     (options) {
@@ -30,6 +34,8 @@ Future<void> main() async {
     },
     // Wrap runApp — lỗi Flutter framework + zone chưa bắt đều về Sentry.
     appRunner: () async {
+      // AdMob SDK init (phụ trợ — lỗi không chặn app chính).
+      await AdsService.instance.init();
       if (AppAuthMode.isFirebase) {
         // Options từ dart-define (không cần firebase_options.dart sinh code).
         await Firebase.initializeApp(

@@ -46,6 +46,9 @@ dependencies:
   package_info_plus: ^8.0.0
   # Release ops — crash/error monitoring (Sentry, DSN qua dart-define SENTRY_DSN).
   sentry_flutter: ^9.20.0
+  # AdMob — kiếm tiền ads (banner/interstitial/app-open). Unit IDs chọn
+  # test/real qua dart-define TEST_ADS (mặc định true) trong admob_config.dart.
+  google_mobile_ads: ^8.0.0
 
 dev_dependencies:
   flutter_test:

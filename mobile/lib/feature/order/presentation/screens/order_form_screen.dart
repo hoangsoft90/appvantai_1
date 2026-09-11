@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/utils/formatters.dart';
 import '../../../../shared/services/api_exception.dart';
+import '../../../../shared/services/ads_service.dart';
 import '../../../identity/domain/vehicle_types.dart';
 import '../../../trip/data/trip_repository.dart';
 import '../../application/order_list_controller.dart';
@@ -192,6 +193,9 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
       await ref.read(orderRepositoryProvider).createOrder(draft);
       ref.invalidate(orderListControllerProvider);
       if (!mounted) return;
+      // Interstitial tại chuyển cảnh tự nhiên (đăng hàng xong) — fire-and-forget:
+      // ads là phụ trợ, navigation không được chặn/kẹt nếu ad chưa load hay lỗi.
+      AdsService.instance.showInterstitial();
       context.go('/orders');
     } on ApiException catch (e) {
       if (!mounted) return;

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../auth/application/auth_controller.dart';
 import '../../../auth/domain/auth_models.dart';
+import '../../../../shared/widgets/banner_ad_widget.dart';
 
 /// Màn hình chính (Phase 1: hiển thị hồ sơ + điều hướng).
 /// Phase 2+: đơn hàng (customer) / Phase 3+: radar matches (driver, plan §4.1).
@@ -80,6 +81,8 @@ class HomeScreen extends ConsumerWidget {
           ),
         ),
       ),
+      // AdMob banner (test/real theo flag TEST_ADS) — ẩn khi debug/test env.
+      bottomNavigationBar: const BannerAdWidget(),
     );
   }
 }
