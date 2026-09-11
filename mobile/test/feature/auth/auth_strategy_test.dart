@@ -58,6 +58,21 @@ void main() {
     expect(session.token, 'jwt-firebase-test'); // từ loginWithFirebaseIdToken fake
   });
 
+  test('FirebaseAuthStrategy.toE164: 0xxx/84xxx → +84xxx; giữ nguyên dạng +', () {
+    expect(FirebaseAuthStrategy.toE164('0912345678'), '+84912345678');
+    expect(FirebaseAuthStrategy.toE164('84912345678'), '+84912345678');
+    expect(FirebaseAuthStrategy.toE164('+84912345678'), '+84912345678');
+  });
+
+  test('FirebaseAuthStrategy: startLogin nhận 0xxx (identity app) → gửi SMS E.164', () async {
+    final fake = FakeAuthRepository();
+    final phone = FakePhoneAuthProvider();
+    final strategy = FirebaseAuthStrategy(fake, phone);
+
+    await strategy.startLogin('0912345678');
+    expect(phone.sentPhones, ['+84912345678']);
+  });
+
   test('FirebaseAuthStrategy: sai mã SMS → ApiException thân thiện (không crash)', () async {
     final fake = FakeAuthRepository();
     final phone = FakePhoneAuthProvider()..nextConfirmError = 'Mã xác minh không đúng';

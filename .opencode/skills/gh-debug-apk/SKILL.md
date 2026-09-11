@@ -96,6 +96,14 @@ curl -s -H "Authorization: token <TOKEN>" \
   Muốn test worker local: thay cặp API_BASE_URL bằng base64 của
   `API_BASE_URL=http://localhost:8787` (python3: `import base64;
   base64.b64encode(b'API_BASE_URL=http://localhost:8787').decode()`).
+- **Firebase Phone Auth đã bật trên APK CI** (2026-09-11): workflow tự sinh
+  dart-defines `FIREBASE_*` + `USE_FIREBASE_AUTH=true` từ
+  `mobile/android/app/google-services.json` (commit trong repo). Cùng cặp với:
+  - `mobile/android/app/debug.keystore` commit cố ý (negation trong
+    `mobile/android/.gitignore`) — SHA cố định đăng ký trên Firebase console;
+    đổi keystore = SMS hỏng ngay
+  - Mobile gửi SMS dạng E.164 (`FirebaseAuthStrategy.toE164`: 0xxx → +84xxx);
+    Worker chuẩn hoá ngược +84xxx → 0xxx để khớp identity/seed
 - Release build thiếu `--dart-define=APP_ENV=production|staging` → fail-fast ở Gradle
   (cố ý — fix_p7_1). **Debug build không bị chặn.**
 - `worker/.wrangler/` đã thêm vào root `.gitignore` — đừng commit local D1/KV state.

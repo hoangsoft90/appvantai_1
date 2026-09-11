@@ -22,17 +22,26 @@ DELETE FROM cargo_orders WHERE notes = 'pilot';
 DELETE FROM driver_profiles WHERE user_id IN (SELECT id FROM users WHERE phone LIKE '0983%');
 DELETE FROM users WHERE phone LIKE '0983%';
 
--- 1) Tài khoản admin (login Firebase lần đầu sẽ NHẬN LẠI role này — upsert giữ role)
-INSERT INTO users (id, name, phone, role, status, legal_consent_at)
-VALUES ('seed-admin-0000-0000-000000000001', 'Admin', '0363930250', 'admin', 'active', strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
-ON CONFLICT(phone) DO UPDATE SET role = 'admin', updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now');
+-- 1) Tài khoản admin. KHÔNG set legal_consent_at ở đây — consent §18 phải sinh
+--    TỰ NHIÊN qua POST /me/legal-consent (user tick in-app lần đầu login) để có
+--    dòng audit_logs làm bằng chứng pháp lý (review 2026-09-11, mục P2).
+INSERT INTO users (id, name, phone, role, status)
+VALUES ('seed-admin-0000-0000-000000000001', 'Admin', '0363930250', 'admin', 'active')
+ON CONFLICT(phone) DO UPDATE SET
+  role = 'admin',
+  -- re-seed: xoá consent cũ (được set sai từ lần seed đầu có legal_consent_at) —
+  -- user sẽ tick disclaimer in-app lần đầu login → audit_logs chuẩn §18.
+  legal_consent_at = NULL,
+  updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now');
 
--- 2) 4 tài xế seed + 8 chủ hàng seed (SQL-only, đúng tên/số như seed_pilot.sh)
-INSERT INTO users (id, name, phone, role, status, legal_consent_at) VALUES
-  ('seed-driver-0000-0000-000000000001', 'Tài Xế Pilot 1', '0983500001', 'driver', 'active', strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
-  ('seed-driver-0000-0000-000000000002', 'Tài Xế Pilot 2', '0983500002', 'driver', 'active', strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
-  ('seed-driver-0000-0000-000000000003', 'Tài Xế Pilot 3', '0983500003', 'driver', 'active', strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
-  ('seed-driver-0000-0000-000000000004', 'Tài Xế Pilot 4', '0983500004', 'driver', 'active', strftime('%Y-%m-%dT%H:%M:%fZ', 'now'));
+-- 2) 4 tài xế seed + 8 chủ hàng seed (SQL-only, đúng tên/số như seed_pilot.sh).
+--    Consent trống — user seed chỉ "sống" khi chủ số thật login + tick disclaimer.
+--    (Không chặn matching: matches sinh từ trip của DRIVER — không cần consent.)
+INSERT INTO users (id, name, phone, role, status) VALUES
+  ('seed-driver-0000-0000-000000000001', 'Tài Xế Pilot 1', '0983500001', 'driver', 'active'),
+  ('seed-driver-0000-0000-000000000002', 'Tài Xế Pilot 2', '0983500002', 'driver', 'active'),
+  ('seed-driver-0000-0000-000000000003', 'Tài Xế Pilot 3', '0983500003', 'driver', 'active'),
+  ('seed-driver-0000-0000-000000000004', 'Tài Xế Pilot 4', '0983500004', 'driver', 'active');
 
 INSERT INTO driver_profiles (id, user_id, vehicle_type, license_plate, capacity_kg, vehicle_length_cm, vehicle_width_cm, vehicle_height_cm, operating_area) VALUES
   ('seed-dprof-0000-0000-000000000001', 'seed-driver-0000-0000-000000000001', 'truck',  '29C-101', 5000, 700, 220, 200, 'HN-HP'),
@@ -40,15 +49,15 @@ INSERT INTO driver_profiles (id, user_id, vehicle_type, license_plate, capacity_
   ('seed-dprof-0000-0000-000000000003', 'seed-driver-0000-0000-000000000003', 'van',    '29C-303', 1500, 700, 220, 200, 'HN-HP'),
   ('seed-dprof-0000-0000-000000000004', 'seed-driver-0000-0000-000000000004', 'pickup', '29C-404', 1200, 700, 220, 200, 'HN-HP');
 
-INSERT INTO users (id, name, phone, role, status, legal_consent_at) VALUES
-  ('seed-customer-0000-0000-000000000001', 'Chủ Hàng Pilot 1', '0983600001', 'customer', 'active', strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
-  ('seed-customer-0000-0000-000000000002', 'Chủ Hàng Pilot 2', '0983600002', 'customer', 'active', strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
-  ('seed-customer-0000-0000-000000000003', 'Chủ Hàng Pilot 3', '0983600003', 'customer', 'active', strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
-  ('seed-customer-0000-0000-000000000004', 'Chủ Hàng Pilot 4', '0983600004', 'customer', 'active', strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
-  ('seed-customer-0000-0000-000000000005', 'Chủ Hàng Pilot 5', '0983600005', 'customer', 'active', strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
-  ('seed-customer-0000-0000-000000000006', 'Chủ Hàng Pilot 6', '0983600006', 'customer', 'active', strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
-  ('seed-customer-0000-0000-000000000007', 'Chủ Hàng Pilot 7', '0983600007', 'customer', 'active', strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
-  ('seed-customer-0000-0000-000000000008', 'Chủ Hàng Pilot 8', '0983600008', 'customer', 'active', strftime('%Y-%m-%dT%H:%M:%fZ', 'now'));
+INSERT INTO users (id, name, phone, role, status) VALUES
+  ('seed-customer-0000-0000-000000000001', 'Chủ Hàng Pilot 1', '0983600001', 'customer', 'active'),
+  ('seed-customer-0000-0000-000000000002', 'Chủ Hàng Pilot 2', '0983600002', 'customer', 'active'),
+  ('seed-customer-0000-0000-000000000003', 'Chủ Hàng Pilot 3', '0983600003', 'customer', 'active'),
+  ('seed-customer-0000-0000-000000000004', 'Chủ Hàng Pilot 4', '0983600004', 'customer', 'active'),
+  ('seed-customer-0000-0000-000000000005', 'Chủ Hàng Pilot 5', '0983600005', 'customer', 'active'),
+  ('seed-customer-0000-0000-000000000006', 'Chủ Hàng Pilot 6', '0983600006', 'customer', 'active'),
+  ('seed-customer-0000-0000-000000000007', 'Chủ Hàng Pilot 7', '0983600007', 'customer', 'active'),
+  ('seed-customer-0000-0000-000000000008', 'Chủ Hàng Pilot 8', '0983600008', 'customer', 'active');
 
 -- 3) 8 đơn pilot (6 trên corridor + 2 nhiễu ngoài corridor để test pre-filter)
 --    pickup_from/to = +2h/+12h lúc chạy seed → không bao giờ hết hạn lúc seed;

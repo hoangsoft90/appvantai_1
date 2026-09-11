@@ -296,6 +296,24 @@ chạy. Dev (APP_ENV=dev) không bị ảnh hưởng.
   3 match đúng (score 100/100/70, detour 0/−3.7km), 2 đơn nhiễu bị pre-filter;
   trip+match test đã xoá, JWT_SECRET đã rotate sau verify (token test chết)
 
+**Firebase Phone Auth production (2026-09-11):**
+
+- `mobile/android/app/google-services.json` (project `appvantai1`, package
+  `vn.appvantai.appvantai_mobile`) commit trong repo — CI đọc file này sinh
+  dart-defines `FIREBASE_*` + `USE_FIREBASE_AUTH=true` lúc build (cơ chế
+  dart-define của phase 7, KHÔNG cần gradle plugin google-services)
+- `mobile/android/app/debug.keystore` commit cố ý (password chuẩn `android`,
+  không phải secret) — SHA-1/SHA-256 cố định phải được đăng ký trên Firebase
+  console (Authentication → Sign-in method → Phone → Domains/fingerprints) else
+  SMS bị chặn `API restriction`; keystore debug random mỗi CI build là nguyên
+  nhân phổ biến khiến SMS hỏng không đều
+- Worker `/auth/firebase` chuẩn hoá `phone_number` E.164 (+84xxx) từ ID token
+  về 0xxx (identity duy nhất) — khớp user seed/admin đã tạo từ trước
+- Mobile `FirebaseAuthStrategy.toE164`: 0xxx → +84xxx trước khi gọi
+  `verifyPhoneNumber` (Firebase bắt buộc E.164)
+- User seed `legal_consent_at` để TRỐNG — consent §18 sinh từ audit log khi
+  user tick disclaimer in-app lần đầu login (không set thẳng SQL nữa)
+
 **Mobile release (fix_p7_1.md #2):** build APK release không truyền
 `--dart-define=APP_ENV=production` (hoặc staging) sẽ **fail ngay lúc build**
 (Gradle check). APP_ENV=production bắt buộc thêm: API HTTPS non-local,

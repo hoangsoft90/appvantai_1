@@ -73,6 +73,16 @@ android {
     }
 
     signingConfigs {
+        // Debug keystore COMMIT vào repo (không phải secret — password chuẩn "android"):
+        // SHA fingerprint phải CỐ ĐỊNH giữa các build CI vì Firebase Phone Auth
+        // chỉ gửi SMS cho APK có SHA khớp với SHA đã đăng ký trên Firebase console.
+        // Debug keystore mặc định của CI là random mỗi build → SMS sẽ hỏng không đều.
+        create("debug") {
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
         if (hasReleaseKeystore) {
             create("release") {
                 keyAlias = keystoreProperties["keyAlias"] as String
@@ -84,6 +94,10 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Dùng debug.keystore trong repo (SHA cố định — xem signingConfigs.debug)
+            signingConfig = signingConfigs.getByName("debug")
+        }
         release {
             // fix_p7_1.md #4 — fail-fast cho release build: KHÔNG throw ở đây!
             // (bài học run 34583778615: block này chạy eagerly lúc cấu hình — cả khi

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "355378815941",
+    "project_id": "appvantai1",
+    "storage_bucket": "appvantai1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:355378815941:android:2d237837438acca6ad61ac",
+        "android_client_info": {
+          "package_name": "vn.appvantai.appvantai_mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAFS7CtX9UEQVqSNc0wDTUn3guB3lNbgR0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

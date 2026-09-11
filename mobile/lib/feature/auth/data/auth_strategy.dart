@@ -55,7 +55,9 @@ class FirebaseAuthStrategy implements AuthStrategy {
   @override
   Future<String> startLogin(String phone) async {
     try {
-      await _phoneAuth.sendCode(phone);
+      // PhoneValidator.normalize cho 0xxxxxxxxx (định dạng identity của app),
+      // nhưng Firebase verifyPhoneNumber BẮT BUỘC E.164 → đổi 0xxx → +84xxx.
+      await _phoneAuth.sendCode(toE164(phone));
     } on ApiException {
       rethrow;
     } catch (e) {
@@ -66,6 +68,14 @@ class FirebaseAuthStrategy implements AuthStrategy {
       );
     }
     return ''; // production không có dev_otp
+  }
+
+  /// 0xxxxxxxxx (Việt Nam) → +84xxxxxxxxx (E.164 bắt buộc của Firebase).
+  static String toE164(String phone) {
+    if (phone.startsWith('+')) return phone;
+    if (phone.startsWith('84') && phone.length == 11) return '+$phone';
+    if (phone.startsWith('0') && phone.length == 10) return '+84${phone.substring(1)}';
+    return '+$phone'; // fallback — để Firebase tự chấm nếu format lạ
   }
 
   @override

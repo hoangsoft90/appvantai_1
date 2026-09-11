@@ -12,4 +12,9 @@ GeneratedPluginRegistrant.java
 key.properties
 **/*.keystore
 **/*.jks
+# NGOẠI LỆ: app/debug.keystore được COMMIT CỐ Ý (không phải secret — password
+# chuẩn "android"). SHA cố định bắt buộc cho Firebase Phone Auth: console Firebase
+# chỉ gửi SMS cho APK có SHA khớp SHA đã đăng ký; keystore debug random mỗi build
+# CI → SMS hỏng không đều.
+!app/debug.keystore
 dart-define.properties

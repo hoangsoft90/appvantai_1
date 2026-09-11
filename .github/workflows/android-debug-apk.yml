@@ -6,8 +6,9 @@ name: Android Debug APK
 #
 # Tải artifact tại: GitHub repo → Actions → run mới nhất → "Android Debug APK" → Artifacts.
 # API_BASE_URL trỏ backend production (https://appvantai-api.testhoangweb.workers.dev)
-# — cài lên máy thật là test được với backend thật, KHÔNG cần `adb reverse`.
-# Muốn test với worker local: sửa dart-defines bên dưới về localhost:8787 + adb reverse.
+# + Firebase Phone Auth bật (USE_FIREBASE_AUTH=true, giá trị đọc từ
+# google-services.json commit trong repo — SHA debug.keystore cố định phải được
+# đăng ký trên Firebase console) → cài máy thật là login SMS thật + test backend thật.
 
 on:
   push:
@@ -65,15 +66,38 @@ jobs:
 
       # Gradle trực tiếp qua wrapper (task assembleDebug) — đúng yêu cầu
       # "dùng gradle trực tiếp, không cần token EAS".
-      # dart-defines dạng Flutter chuẩn (comma-separated base64 từng cặp KEY=VALUE):
-      #   APP_ENV=dev    (build.gradle.kts chỉ chặn release thiếu production/staging — debug luôn pass)
-      #   API_BASE_URL   (backend production trên Cloudflare Workers — cài là test được ngay)
-      #   SENTRY_DSN     (init runtime, không ảnh hưởng compile)
+      # Sinh dart-defines từ google-services.json (commit trong repo) — đúng cơ chế
+      # dart-define của Phase 7 (main.dart tự Firebase.initializeApp bằng FIREBASE_*),
+      # KHÔNG cần gradle plugin google-services. Format: comma-separated base64
+      # từng cặp KEY=VALUE (chuẩn Flutter tool + build.gradle.kts tự decode).
+      # API_BASE_URL = backend production; APP_ENV=dev → debug build không bị guard chặn.
+      - name: Build dart-defines (app + Firebase từ google-services.json)
+        working-directory: mobile
+        run: |
+          python3 - <<'EOF'
+          import base64, json, os
+          g = json.load(open('android/app/google-services.json'))
+          c = g['client'][0]
+          pairs = {
+            'APP_ENV': 'dev',
+            'API_BASE_URL': 'https://appvantai-api.testhoangweb.workers.dev',
+            'USE_FIREBASE_AUTH': 'true',
+            'FIREBASE_API_KEY': c['api_key'][0]['current_key'],
+            'FIREBASE_PROJECT_ID': g['project_info']['project_id'],
+            'FIREBASE_APP_ID': c['client_info']['mobilesdk_app_id'],
+            'FIREBASE_MSG_SENDER_ID': g['project_info']['project_number'],
+            'SENTRY_DSN': 'https://0593f6273f2522bf5e6bc9ba2a2c91d9@o4505474077753344.ingest.us.sentry.io/4512066576777216',
+          }
+          defines = ','.join(base64.b64encode(f'{k}={v}'.encode()).decode() for k, v in pairs.items())
+          with open(os.environ['GITHUB_ENV'], 'a') as f:
+              f.write(f'DART_DEFINES={defines}\n')
+          EOF
+
+      # Gradle trực tiếp qua wrapper (task assembleDebug) — đúng yêu cầu
+      # "dùng gradle trực tiếp, không cần token EAS".
       - name: Gradle assembleDebug
         working-directory: mobile/android
-        run: ./gradlew assembleDebug
-          -Pdart-defines=QVBQX0VOVj1kZXY=,QVBJX0JBU0VfVVJMPWh0dHBzOi8vYXBwdmFudGFpLWFwaS50ZXN0aG9hbmd3ZWIud29ya2Vycy5kZXY=,U0VOVFJZX0RTTj1odHRwczovLzA1OTNmNjI3M2YyNTIyYmY1ZTZiYzliYTJhMmM5MWQ5QG80NTA1NDc0MDc3NzUzMzQ0LmluZ2VzdC51cy5zZW50cnkuaW8vNDUxMjA2NjU3Njc3NzIxNg==
-          --stacktrace
+        run: ./gradlew assembleDebug -Pdart-defines="$DART_DEFINES" --stacktrace
 
       # Renamed trước khi upload để tên file tự giải thích.
       - name: Rename APK

@@ -87,7 +87,15 @@ authRoutes.post('/firebase', async (c) => {
     projectId,
     jwksUrl: c.env.FIREBASE_JWKS_URL || undefined,
   });
-  const user = await upsertUserByPhone(c.env.DB, payload.phone);
+  // Firebase trả phone_number dạng E.164 (+84xxxxxxxxx) — chuẩn hoá về 0xxxxxxxxx
+  // để khớp identity duy nhất của app (users.phone UNIQUE là 0xxx, login OTP dev
+  // cũng lưu 0xxx). Không chuẩn hoá → 1 user có 2 row (0xxx từ seed/dev, +84xxx
+  // từ Firebase) → mất role/consent/đơn đã tạo trước đó.
+  const phone = normalizePhone(payload.phone);
+  if (!phone) {
+    throw Errors.unauthorized('INVALID_PHONE', 'Số điện thoại trong ID token không hợp lệ');
+  }
+  const user = await upsertUserByPhone(c.env.DB, phone);
   await setFirebaseUid(c.env.DB, user.id, payload.uid);
   const now = Math.floor(Date.now() / 1000);
   const token = await sign(
