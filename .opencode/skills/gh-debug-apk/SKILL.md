@@ -88,6 +88,10 @@ curl -s -H "Authorization: token <TOKEN>" \
 - `mobile/android/gradle/wrapper/gradle-wrapper.jar` + `gradlew` bị Flutter template
   gitignore nhưng **CI bắt buộc phải có** → đã `git add -f`. Nếu thiếu, CI báo
   `Error: Could not find or load main class org.gradle.wrapper.GradleWrapperMain`.
+- **AGP tạo SẴN signing config `debug`** — muốn trỏ keystore riêng phải
+  `getByName("debug") { ... }` để OVERRIDE, KHÔNG được `create("debug")`
+  (trùng tên → `InvalidUserDataException: Cannot add a SigningConfig with name
+  'debug'` — run 34610101578).
 - dart-defines cho gradle: **comma-separated base64 của từng cặp KEY=VALUE**, truyền qua
   `-Pdart-defines=...` (đúng như Flutter tool làm). Workflow hiện nhúng
   `APP_ENV=dev` + `API_BASE_URL=https://appvantai-api.testhoangweb.workers.dev`

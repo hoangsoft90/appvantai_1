@@ -77,7 +77,10 @@ android {
         // SHA fingerprint phải CỐ ĐỊNH giữa các build CI vì Firebase Phone Auth
         // chỉ gửi SMS cho APK có SHA khớp với SHA đã đăng ký trên Firebase console.
         // Debug keystore mặc định của CI là random mỗi build → SMS sẽ hỏng không đều.
-        create("debug") {
+        // AGP đã tạo SẴN config "debug" (trỏ ~/.android/debug.keystore) — phải
+        // getByName() để OVERRIDE, create() trùng tên → InvalidUserDataException
+        // (bài học run 34610101578).
+        getByName("debug") {
             storeFile = file("debug.keystore")
             storePassword = "android"
             keyAlias = "androiddebugkey"
