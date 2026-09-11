@@ -1,0 +1,77 @@
+---
+name: gh-debug-apk
+description: Build debug APK for THIS project on GitHub Actions (never build APK locally). Use when asked to "build apk", "build debug apk", "tải apk test", "thấy lỗi trên máy thật", "push code lên gh actions" for appvantai.
+---
+
+# Build debug APK qua GitHub Actions (appvantai)
+
+## Quy tắc bất di bất dịch
+
+1. **TUYỆT ĐỐI KHÔNG build APK local** (`flutter build apk`, `./gradlew assembleDebug`,
+   `flutter build appbundle`) — user cấm vì tốn disk/network. Android SDK đã bị XÓA khỏi
+   máy local (2026-09-11): `/usr/lib/android-sdk`, `~/.gradle`, `~/Android/Sdk`, `~/.android`.
+   KHÔNG cài lại local SDK. `flutter pub get / analyze / test` vẫn chạy local bình thường.
+2. Build APK **chỉ trên GitHub Actions** bằng **gradle trực tiếp** (`./gradlew assembleDebug`,
+   KHÔNG EAS, KHÔNG cần token EAS, KHÔNG keystore — debug signing).
+3. **Không đợi build xong** khi user chỉ yêu cầu đẩy code lên CI — push xong là báo link run.
+
+## Thông số cố định
+
+- Repo: `https://github.com/hoangsoft90/appvantai_1` (branch chính: `master`)
+- Workflow: `.github/workflows/android-debug-apk.yml` — trigger tự động trên push vào
+  `master`/`main` khi `mobile/**` hoặc workflow đổi; hoặc chạy tay bằng `workflow_dispatch`.
+- Toolchain pinned trong repo (KHÔNG đổi lung tung):
+  - Flutter **3.47.2** stable (subosito/flutter-action@v2)
+  - JDK **17** temurin (khớp sourceCompatibility 17 trong build.gradle.kts)
+  - AGP **9.1.0** + Kotlin **2.4.0** (`mobile/android/settings.gradle.kts`), Gradle wrapper **9.3.1**
+  - compileSdk/targetSdk **36** (pin cứng — Play yêu cầu API 36 từ 31/08/2026)
+- Artifact: tên `appvantai-debug-apk`, file `appvantai-debug.apk`, giữ 14 ngày.
+  Tải tại: repo → **Actions** → run mới nhất → **Artifacts**.
+
+## Token GitHub (QUAN TRỌNG)
+
+- **KHÔNG lưu token vào repo/skill này** (bất kỳ file nào được commit). Token PAT
+  KHÔNG được commit — GitHub tự động thu hồi token lộ trong code.
+- Nguồn token khi cần push (theo thứ tự):
+  1. Đọc file local **`.secrets/gh_token`** (gitignored, ở project root) nếu tồn tại.
+  2. Nếu file chưa có hoặc token bị 401 → hỏi user xin token mới (scope `repo`) **một lần**,
+     rồi **LƯU NGAY vào `.secrets/gh_token`** (`mkdir -p .secrets && printf '%s' '<TOKEN>' > .secrets/gh_token`)
+     để các phiên sau không phải hỏi lại.
+- Kiểm tra token trước khi push: `curl -s -o /dev/null -w '%{http_code}' -H "Authorization: token $(cat .secrets/gh_token)" https://api.github.com/user` → phải ra `200`.
+- Nếu 401 → báo user cấp token mới (github.com/settings/tokens), đừng thử lại vô ích.
+- Lệnh push luôn dạng `https://hoangsoft90:<TOKEN>@github.com/...` (user:token).
+
+## Quy trình build APK
+
+```bash
+# 0) (một lần) xác thực token: curl -s -H "Authorization: token <TOKEN>" https://api.github.com/user → 200
+# 1) đảm bảo mọi thay đổi đã commit; kiểm tra không commit file cấm:
+git status --porcelain
+git diff --cached --name-only | grep -E "^\.plan/|\.dev\.vars|local\.properties|key\.properties$|\.jks$|\.keystore$"   # phải RỖNG
+# 2) push branch chính (điền TOKEN do user cung cấp):
+git push -u https://hoangsoft90:<TOKEN>@github.com/hoangsoft90/appvantai_1.git master
+# 3) báo link run (KHÔNG đợi): https://github.com/hoangsoft90/appvantai_1/actions
+# 4) lấy link artifact sau khi build xong (nếu user hỏi):
+curl -s -H "Authorization: token <TOKEN>" \
+  "https://api.github.com/repos/hoangsoft90/appvantai_1/actions/runs?per_page=1" | jq '.workflow_runs[0].id, .workflow_runs[0].html_url'
+```
+
+## Bài học build (đã xử lý sẵn trong repo — đừng phá)
+
+- `mobile/android/gradle/wrapper/gradle-wrapper.jar` + `gradlew` bị Flutter template
+  gitignore nhưng **CI bắt buộc phải có** → đã `git add -f`. Nếu thiếu, CI báo
+  `Error: Could not find or load main class org.gradle.wrapper.GradleWrapperMain`.
+- dart-defines cho gradle: **comma-separated base64 của từng cặp KEY=VALUE**, truyền qua
+  `-Pdart-defines=...` (đúng như Flutter tool làm). Workflow hiện nhúng
+  `APP_ENV=dev` + `SENTRY_DSN` (debug app vẫn init Sentry để test error reporting).
+- Release build thiếu `--dart-define=APP_ENV=production|staging` → fail-fast ở Gradle
+  (cố ý — fix_p7_1). **Debug build không bị chặn.**
+- `worker/.wrangler/` đã thêm vào root `.gitignore` — đừng commit local D1/KV state.
+- Workflow có Gradle cache (`gradle/actions/setup-gradle@v4`) — cold build ~10-15 phút,
+  warm ~5-8 phút. Báo user tải APK ở tab Artifacts.
+
+## Sau khi build xong (trên máy thật)
+
+- Debug APK dùng `API_BASE_URL` mặc định `http://localhost:8787` → chạy worker local rồi
+  `adb reverse tcp:8787 tcp:8787`, hoặc sửa dart-define trong workflow nếu cần API khác.
+- Manifest đã bật `usesCleartextTraffic=true` → HTTP mọi domain chạy được trên máy thật.

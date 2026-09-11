@@ -44,7 +44,7 @@ mobile/    Flutter app (iOS + Android), Feature-First
 1. **Priority order:** 0đ cost → matching quality → reliability → no over-engineering.
 2. **Evidence before "done":** every task needs code change + passing verification (see working.md commands). Never claim completion without real tool output.
 3. **Backend checks are authority:** role/ownership/consent/rate-limit/state-machine all enforced server-side; client validation is UX only.
-4. **Never build/run the Flutter app locally** (user directive: local dev has been removed, disk-constrained). Write code + run `flutter analyze`/`flutter test` only; real verification happens on the user's side.
+4. **Never build/run the Flutter app locally** (user directive: local dev has been removed, disk-constrained). Write code + run `flutter analyze`/`flutter test` only. **Debug APK builds happen ONLY on GitHub Actions** (gradle trực tiếp, no EAS/keystore) — workflow `.github/workflows/android-debug-apk.yml`, pushed to `github.com/hoangsoft90/appvantai_1` (branch `master`). Full procedure + token handling: skill `.opencode/skills/gh-debug-apk/SKILL.md`. Android SDK is DELETED locally — never reinstall it.
 5. Match to the plan's state machine — do not add transitions or client-side "convenience" states.
 6. Respond in Vietnamese when the user writes Vietnamese (default working language of this repo).
 
