@@ -58,6 +58,15 @@ curl -s -H "Authorization: token <TOKEN>" \
 
 ## Bài học build (đã xử lý sẵn trong repo — đừng phá)
 
+- **`mobile/android/app/build.gradle.kts` là Kotlin DSL — CẤM cú pháp Groovy** (`def`,
+  map literal `[(k): v]`, `new X()`, `it.decodeBase64()`). Bản trước trộn Groovy vào .kts
+  → `ScriptCompilationException` 11 errors ở bước cấu hình (run 34582723799). Đã viết
+  lại bằng Kotlin thuần (`val`, `Base64.getDecoder()`, `GradleException`). Lỗi kiểu này
+  không bắt được bằng flutter analyze — chỉ lộ khi gradle compile script (CI).
+- `plugins {}` của app PHẢI có `id("org.jetbrains.kotlin.android")` vì gradle.properties
+  đặt `android.builtInKotlin=false` (template Flutter — external KGP 2.4.0 trong
+  settings.gradle.kts). Thiếu → `kotlin {}` block chết.
+
 - **Push lần đầu lên repo MỚI + workflow có `paths:` filter = KHÔNG trigger** (workflow
   chưa kịp đăng ký và/hoặc push không chạm file khớp filter). Fix đã kiểm chứng
   (2026-09-11): commit **chạm chính file workflow** rồi push → run khởi động ngay.

@@ -1,27 +1,40 @@
-import java.util.Properties
 import java.io.FileInputStream
+import java.util.Base64
+import java.util.Properties
+
+plugins {
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
+    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
+    id("dev.flutter.flutter-gradle-plugin")
+}
 
 // fix_p7_1.md #2 — dart-define đọc từ Gradle property `dart-defines` (flutter tool
 // truyền qua -Pdart-defines=<comma-separated base64 của từng cặp KEY=VALUE>).
 // Fallback: dart-define.properties bên android/ (KHÔNG commit — đã gitignore).
-def dartDefinesRaw = (project.findProperty("dart-defines") as String? ?: "")
-    .split(",").findAll { it.trim() }
-    .collectEntries {
-        def kv = new String(it.decodeBase64(), "UTF-8").split("=", 2)
-        kv.size() == 2 ? [(kv[0]): kv[1]] : [:]
-    }
-def appEnvDefine = dartDefinesRaw.get("APP_ENV", "")
-def propFile = rootProject.file("dart-define.properties")
-if (appEnvDefine.isEmpty() && propFile.exists()) {
-    def p = new Properties()
-    p.load(new FileInputStream(propFile))
-    appEnvDefine = p.getProperty("APP_ENV", "")
-}
+//
+// ⚠️ BÀI HỌC (run GH Actions 34582723799): file này là Kotlin DSL (.kts) — CẤM cú
+// pháp Groovy (`def`, map literal `[(k): v]`, `new X()`). Bản trước dùng `def` →
+// ScriptCompilationException ngay khi cấu hình. Chỉ viết Kotlin chuẩn.
+val dartDefinesRaw: Map<String, String> =
+    (project.findProperty("dart-defines") as String? ?: "")
+        .split(",")
+        .filter { it.isNotBlank() }
+        .mapNotNull { token ->
+            val decoded = runCatching {
+                String(Base64.getDecoder().decode(token), Charsets.UTF_8)
+            }.getOrNull() ?: return@mapNotNull null
+            val parts = decoded.split("=", limit = 2)
+            if (parts.size == 2) parts[0] to parts[1] else null
+        }
+        .toMap()
 
-plugins {
-    id("com.android.application")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
-    id("dev.flutter.flutter-gradle-plugin")
+var appEnvDefine = dartDefinesRaw["APP_ENV"] ?: ""
+val propFile = rootProject.file("dart-define.properties")
+if (appEnvDefine.isEmpty() && propFile.exists()) {
+    val props = Properties()
+    props.load(FileInputStream(propFile))
+    appEnvDefine = props.getProperty("APP_ENV", "")
 }
 
 // Phase 7 §7.3 — release signing qua key.properties (KHÔNG commit file thật,
@@ -47,10 +60,7 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "vn.appvantai.appvantai_mobile"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
         // Play policy: targetSdkVersion >= 36 bắt buộc từ 31/08/2026.
         targetSdk = 36
@@ -79,9 +89,9 @@ android {
             // lúc build (không dựa vào operator nhớ dart-define). Dev local vượt qua bằng
             // cách chạy debug build; bản release test nội bộ dùng --dart-define=APP_ENV=staging.
             if (appEnvDefine != "production" && appEnvDefine != "staging") {
-                throw new GradleException(
+                throw GradleException(
                     "Release build phải truyền --dart-define=APP_ENV=production (hoặc staging cho bản test nội bộ). " +
-                    "Hiện tại: '" + appEnvDefine + "'."
+                        "Hiện tại: '" + appEnvDefine + "'.",
                 )
             }
             // Có key.properties → sign bằng keystore release; không → debug keys
