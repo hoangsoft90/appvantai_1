@@ -17,6 +17,10 @@ interstitial sau tạo đơn + App Open (cold start/resume ≥30s); chi tiết
 lần lượt: Groovy-trong-.kts, guard release eagerly-evaluated, thiếu build_runner
 codegen trên CI (chi tiết trong skill `gh-debug-apk`).
 Local Android SDK/gradle DELETED (2026-09-11) — APK chỉ build trên GH Actions.
+**Backend LIVE trên Cloudflare (2026-09-11)**: `https://appvantai-api.testhoangweb.workers.dev`
+— D1 `appvantai` + KV `APP_KV` thật (id trong wrangler.toml), migrations 0001→0009
+applied `--remote`, secrets `JWT_SECRET` + `FIREBASE_PROJECT_ID=appvantai1`, guard
+503 verified. Deploy lại: `cd worker && npm run deploy` (as-built trong README §Deployment).
 Project knowledge base lives in `.project/` (update it + context.md at session end
 per `.project/ai-rules.md` §2).
 

@@ -8,7 +8,7 @@ compatibility_date = "2026-08-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "appvantai"
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "99b06c30-4a7d-40d3-ac98-9a23cd5e794b"
 migrations_dir = "migrations"
 
 # --- KV (OTP sessions, GPS location loc:<driver_id>, rate limits) ---
@@ -16,8 +16,8 @@ migrations_dir = "migrations"
 # then copy the real id here (placeholder works for local dev only).
 [[kv_namespaces]]
 binding = "APP_KV"
-id = "00000000-0000-0000-0000-000000000000"
-preview_id = "00000000-0000-0000-0000-000000000000"
+id = "cab0956196b645688a17c8de12089350"
+preview_id = "cab0956196b645688a17c8de12089350"
 
 [vars]
 APP_ENV = "dev"
@@ -58,9 +58,9 @@ MAPS_PROVIDER = "osrm"
 [[env.production.d1_databases]]
 binding = "DB"
 database_name = "appvantai"
-database_id = "REPLACE_WITH_REAL_D1_ID"
+database_id = "99b06c30-4a7d-40d3-ac98-9a23cd5e794b"
 migrations_dir = "migrations"
 
 [[env.production.kv_namespaces]]
 binding = "APP_KV"
-id = "REPLACE_WITH_REAL_KV_ID"
+id = "cab0956196b645688a17c8de12089350"

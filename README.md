@@ -271,6 +271,18 @@ ALLOW_DEV_OTP=true, thiếu FIREBASE_PROJECT_ID, JWKS ngoài localhost) → **m�
 request nhận 503 PRODUCTION_MISCONFIGURED** — sai cấu hình không thể âm thầm
 chạy. Dev (APP_ENV=dev) không bị ảnh hưởng.
 
+**As-built (đã deploy thật 2026-09-11):**
+
+- URL: `https://appvantai-api.testhoangweb.workers.dev` (account
+  kythuat.hoangweb@gmail.com, version `5c3285ce`)
+- D1 `appvantai` = `99b06c30-…` · KV `APP_KV` = `cab09561-…` (đã điền vào
+  wrangler.toml cả dev lẫn [env.production]; id đọc lại bằng
+  `wrangler d1 list` / `wrangler kv namespace list`)
+- Secrets: `JWT_SECRET` (openssl rand) + `FIREBASE_PROJECT_ID=appvantai1`
+- Migrations 0001→0009 đã apply `--remote` (9/9 ✅)
+- Smoke xác minh: request-otp không trả `dev_otp` (`{"ok":true}`),
+  `/auth/firebase` thiếu token → 400 hợp lệ, không còn 503 guard
+
 **Mobile release (fix_p7_1.md #2):** build APK release không truyền
 `--dart-define=APP_ENV=production` (hoặc staging) sẽ **fail ngay lúc build**
 (Gradle check). APP_ENV=production bắt buộc thêm: API HTTPS non-local,
