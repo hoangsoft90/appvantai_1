@@ -92,6 +92,14 @@ curl -s -H "Authorization: token <TOKEN>" \
   `getByName("debug") { ... }` để OVERRIDE, KHÔNG được `create("debug")`
   (trùng tên → `InvalidUserDataException: Cannot add a SigningConfig with name
   'debug'` — run 34610101578).
+- **Firebase `verifyPhoneNumber` là fire-and-forget** — `throw` bên trong
+  callback `verificationFailed`/`codeSent` KHÔNG propagate về caller (bị nuốt).
+  Bug thật (2026-09-11): user thấy "Chưa gửi mã xác minh" vì sendCode báo thành
+  công dù verificationFailed đã chạy. Fix bằng `Completer` trong
+  `FirebasePhoneAuthService.sendCode()` — chỉ hoàn tất khi callback đầu tiên
+  báo kết quả; lỗi Firebase thật (SHA chưa đăng ký, Phone chưa bật, số test
+  sai format) hiện trực tiếp trên màn login. Fake trong unit test không tái
+  hiện được bug này — chỉ lộ khi chạy máy thật.
 - dart-defines cho gradle: **comma-separated base64 của từng cặp KEY=VALUE**, truyền qua
   `-Pdart-defines=...` (đúng như Flutter tool làm). Workflow hiện nhúng
   `APP_ENV=dev` + `API_BASE_URL=https://appvantai-api.testhoangweb.workers.dev`
