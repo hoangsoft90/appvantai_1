@@ -5,8 +5,9 @@ name: Android Debug APK
 # (trigger-fix: commit chạm file workflow này để đảm bảo event push khớp paths filter)
 #
 # Tải artifact tại: GitHub repo → Actions → run mới nhất → "Android Debug APK" → Artifacts.
-# Lưu ý: debug APK dùng API_BASE_URL mặc định localhost:8787 — khi test trên máy thật
-# hãy `adb reverse tcp:8787 tcp:8787` với worker local, hoặc đổi dart-define bên dưới.
+# API_BASE_URL trỏ backend production (https://appvantai-api.testhoangweb.workers.dev)
+# — cài lên máy thật là test được với backend thật, KHÔNG cần `adb reverse`.
+# Muốn test với worker local: sửa dart-defines bên dưới về localhost:8787 + adb reverse.
 
 on:
   push:
@@ -65,12 +66,13 @@ jobs:
       # Gradle trực tiếp qua wrapper (task assembleDebug) — đúng yêu cầu
       # "dùng gradle trực tiếp, không cần token EAS".
       # dart-defines dạng Flutter chuẩn (comma-separated base64 từng cặp KEY=VALUE):
-      #   APP_ENV=dev (build.gradle.kts chỉ chặn release thiếu production/staging — debug luôn pass)
-      #   SENTRY_DSN  (init runtime, không ảnh hưởng compile)
+      #   APP_ENV=dev    (build.gradle.kts chỉ chặn release thiếu production/staging — debug luôn pass)
+      #   API_BASE_URL   (backend production trên Cloudflare Workers — cài là test được ngay)
+      #   SENTRY_DSN     (init runtime, không ảnh hưởng compile)
       - name: Gradle assembleDebug
         working-directory: mobile/android
         run: ./gradlew assembleDebug
-          -Pdart-defines=QVBQX0VOVj1kZXY=,U0VOVFJZX0RTTj1odHRwczovLzA1OTNmNjI3M2YyNTIyYmY1ZTZiYzliYTJhMmM5MWQ5QG80NTA1NDc0MDc3NzUzMzQ0LmluZ2VzdC51cy5zZW50cnkuaW8vNDUxMjA2NjU3Njc3NzIxNg==
+          -Pdart-defines=QVBQX0VOVj1kZXY=,QVBJX0JBU0VfVVJMPWh0dHBzOi8vYXBwdmFudGFpLWFwaS50ZXN0aG9hbmd3ZWIud29ya2Vycy5kZXY=,U0VOVFJZX0RTTj1odHRwczovLzA1OTNmNjI3M2YyNTIyYmY1ZTZiYzliYTJhMmM5MWQ5QG80NTA1NDc0MDc3NzUzMzQ0LmluZ2VzdC51cy5zZW50cnkuaW8vNDUxMjA2NjU3Njc3NzIxNg==
           --stacktrace
 
       # Renamed trước khi upload để tên file tự giải thích.
