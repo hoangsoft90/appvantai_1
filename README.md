@@ -283,6 +283,19 @@ chạy. Dev (APP_ENV=dev) không bị ảnh hưởng.
 - Smoke xác minh: request-otp không trả `dev_otp` (`{"ok":true}`),
   `/auth/firebase` thiếu token → 400 hợp lệ, không còn 503 guard
 
+**Seed production (2026-09-11):**
+
+- Script: `worker/scripts/seed_pilot_prod.sql` — SQL-only qua
+  `wrangler d1 execute appvantai --remote --file ...` (production không có dev
+  OTP nên không seed qua API được như `seed_pilot.sh` local)
+- Đã seed: 1 admin (`0363930250`, login Firebase lần đầu tự nhận role admin —
+  upsert không ghi đè role) + 4 tài xế + 8 chủ hàng + 4 driver_profiles +
+  8 đơn corridor HN→HP (6 thật + 2 nhiễu, `notes='pilot'` để dọn được)
+- User seed SQL-only = token của họ chưa từng tồn tại (an toàn hơn seed API)
+- Matching verify E2E trên production: tạo trip thật → OSRM polyline thật →
+  3 match đúng (score 100/100/70, detour 0/−3.7km), 2 đơn nhiễu bị pre-filter;
+  trip+match test đã xoá, JWT_SECRET đã rotate sau verify (token test chết)
+
 **Mobile release (fix_p7_1.md #2):** build APK release không truyền
 `--dart-define=APP_ENV=production` (hoặc staging) sẽ **fail ngay lúc build**
 (Gradle check). APP_ENV=production bắt buộc thêm: API HTTPS non-local,

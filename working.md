@@ -20,7 +20,11 @@ Local Android SDK/gradle DELETED (2026-09-11) — APK chỉ build trên GH Actio
 **Backend LIVE trên Cloudflare (2026-09-11)**: `https://appvantai-api.testhoangweb.workers.dev`
 — D1 `appvantai` + KV `APP_KV` thật (id trong wrangler.toml), migrations 0001→0009
 applied `--remote`, secrets `JWT_SECRET` + `FIREBASE_PROJECT_ID=appvantai1`, guard
-503 verified. Deploy lại: `cd worker && npm run deploy` (as-built trong README §Deployment).
+503 verified. **Seed pilot prod xong** (script `worker/scripts/seed_pilot_prod.sql`,
+SQL-only): admin `0363930250` + 4 tài xế + 8 đơn corridor HN→HP; matching verify
+E2E trên prod thật (OSRM polyline + 3 match đúng, noise bị pre-filter), dọn sạch
+token test (rotate secret). Deploy lại: `cd worker && npm run deploy` (as-built
+trong README §Deployment).
 Project knowledge base lives in `.project/` (update it + context.md at session end
 per `.project/ai-rules.md` §2).
 
