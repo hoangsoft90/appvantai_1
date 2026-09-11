@@ -66,6 +66,10 @@ curl -s -H "Authorization: token <TOKEN>" \
 - `plugins {}` của app PHẢI có `id("org.jetbrains.kotlin.android")` vì gradle.properties
   đặt `android.builtInKotlin=false` (template Flutter — external KGP 2.4.0 trong
   settings.gradle.kts). Thiếu → `kotlin {}` block chết.
+- **Guard fail-fast release PHẢI hook `gradle.taskGraph.whenReady`, KHÔNG throw trong
+  `buildTypes.release {}`** — block đó được evaluate eagerly lúc cấu hình cho MỌI build
+  (kể cả assembleDebug) → guard cũ từ fix_p7_1 từng kill cả debug build (run
+  34583778615). `whenReady` chỉ chặn khi có task chứa "Release" trong graph.
 
 - **Push lần đầu lên repo MỚI + workflow có `paths:` filter = KHÔNG trigger** (workflow
   chưa kịp đăng ký và/hoặc push không chạm file khớp filter). Fix đã kiểm chứng

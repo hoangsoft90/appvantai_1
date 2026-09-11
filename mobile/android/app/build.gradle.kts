@@ -85,21 +85,28 @@ android {
 
     buildTypes {
         release {
-            // fix_p7_1.md #4 — release build KHÔNG truyền APP_ENV=production → FAIL ngay
-            // lúc build (không dựa vào operator nhớ dart-define). Dev local vượt qua bằng
-            // cách chạy debug build; bản release test nội bộ dùng --dart-define=APP_ENV=staging.
-            if (appEnvDefine != "production" && appEnvDefine != "staging") {
-                throw GradleException(
-                    "Release build phải truyền --dart-define=APP_ENV=production (hoặc staging cho bản test nội bộ). " +
-                        "Hiện tại: '" + appEnvDefine + "'.",
-                )
-            }
+            // fix_p7_1.md #4 — fail-fast cho release build: KHÔNG throw ở đây!
+            // (bài học run 34583778615: block này chạy eagerly lúc cấu hình — cả khi
+            // chỉ assembleDebug. Guard đúng chỗ ở gradle.taskGraph.whenReady phía dưới.)
             // Có key.properties → sign bằng keystore release; không → debug keys
             // (chỉ để test nội bộ — KHÔNG upload lên Play Store, phase 8 bắt buộc keystore thật).
             signingConfig = signingConfigs.getByName(
                 if (hasReleaseKeystore) "release" else "debug",
             )
         }
+    }
+}
+
+// fix_p7_1.md #4 — release KHÔNG truyền APP_ENV=production/staging → FAIL trước khi
+// build (hook taskGraph: chỉ chặn khi có task Release thật sự được chạy — assembleDebug
+// và flutter run --debug không bị ảnh hưởng).
+gradle.taskGraph.whenReady {
+    val buildingRelease = allTasks.any { it.name.contains("Release") }
+    if (buildingRelease && appEnvDefine != "production" && appEnvDefine != "staging") {
+        throw GradleException(
+            "Release build phải truyền --dart-define=APP_ENV=production (hoặc staging cho bản test nội bộ). " +
+                "Hiện tại: '" + appEnvDefine + "'.",
+        )
     }
 }
 
