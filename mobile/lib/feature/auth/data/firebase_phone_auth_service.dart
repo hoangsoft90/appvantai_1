@@ -172,8 +172,9 @@ class FirebasePhoneAuthService implements PhoneAuthProvider {
         return 'App chưa được phép gọi Firebase (SHA-1/SHA-256 keystore chưa đăng ký '
             'trên Firebase console — Project settings → Android app)';
       case 'operation-not-allowed':
-        return 'Phone Auth chưa được bật trên Firebase console '
-            '(Authentication → Sign-in method → Phone)';
+        return 'Chưa gửi được SMS tới khu vực này — Firebase đang chặn region/quota. '
+            'Mở Firebase console → Authentication → Settings → User actions → '
+            '“SMS region allowlist” và cho phép Vietnam (+84), hoặc kiểm tra billing/quota.';
       case 'app-not-verified':
       case 'captcha-check-failed':
         return 'Firebase chưa xác thực được app — kiểm tra SHA fingerprint '
