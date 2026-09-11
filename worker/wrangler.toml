@@ -1,0 +1,66 @@
+name = "appvantai-api"
+main = "src/index.ts"
+compatibility_date = "2026-08-01"
+
+# --- D1 (database) ---
+# Create in production: wrangler d1 create appvantai
+# then copy the real database_id here (placeholder works for local dev only).
+[[d1_databases]]
+binding = "DB"
+database_name = "appvantai"
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "migrations"
+
+# --- KV (OTP sessions, GPS location loc:<driver_id>, rate limits) ---
+# Create in production: wrangler kv namespace create APP_KV
+# then copy the real id here (placeholder works for local dev only).
+[[kv_namespaces]]
+binding = "APP_KV"
+id = "00000000-0000-0000-0000-000000000000"
+preview_id = "00000000-0000-0000-0000-000000000000"
+
+[vars]
+APP_ENV = "dev"
+# Dev-only: khi true, endpoint /auth/request-otp trả về mã OTP trong response (dev_otp)
+# để test không cần SMS. Production: env production ÉP FALSE ở code (routes/auth.ts),
+# không phụ thuộc var này.
+ALLOW_DEV_OTP = "true"
+# Dev/local only. Production: `wrangler secret put JWT_SECRET --env production`
+# (secret override var này, không commit secret thật vào repo).
+JWT_SECRET = "dev-secret-change-me-in-production"
+# Maps provider: "osrm" (default) | "mock" (deterministic, dùng cho test local)
+MAPS_PROVIDER = "osrm"
+
+# --- Production environment (phase7 §7.2 + fix_p7_1.md #1) ---
+# Deploy: `bash scripts/verify_deploy_config.mjs && wrangler deploy --env production`
+# Trước deploy BẮT BUỘC:
+#   1. Thay database_id + kv id dưới đây bằng id production thật
+#      (wrangler d1 create appvantai / wrangler kv namespace create APP_KV)
+#   2. wrangler secret put JWT_SECRET --env production
+#   3. wrangler d1 migrations apply appvantai --remote --env production
+# Env guard (src/lib/env_guard.ts) sẽ TRẢ 503 PRODUCTION_MISCONFIGURED khi còn
+# dev secret — sai cấu hình không thể bị bỏ qua.
+[env.production]
+name = "appvantai-api"
+
+[env.production.vars]
+APP_ENV = "production"
+# Ép tắt dev OTP ở production — routes/auth.ts còn ÉP FALSE ở code, đây là lớp thứ 2.
+ALLOW_DEV_OTP = "false"
+MAPS_PROVIDER = "osrm"
+# JWT_SECRET KHÔNG đặt ở đây và KHÔNG có fallback dev — bắt buộc secret:
+#   wrangler secret put JWT_SECRET --env production
+# (env riêng không kế thừa [vars]; khi thiếu secret, guard chặn mọi request
+# bằng 503 PRODUCTION_MISCONFIGURED — an toàn hơn chạy nhầm dev secret.)
+
+# Điền id production thật vào 2 block dưới (script verify_deploy_config.mjs
+# chặn deploy nếu còn placeholder):
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "appvantai"
+database_id = "REPLACE_WITH_REAL_D1_ID"
+migrations_dir = "migrations"
+
+[[env.production.kv_namespaces]]
+binding = "APP_KV"
+id = "REPLACE_WITH_REAL_KV_ID"

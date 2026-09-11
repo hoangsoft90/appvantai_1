@@ -1,0 +1,77 @@
+name: Android Debug APK
+
+# Build debug APK trực tiếp bằng Gradle wrapper (KHÔNG EAS, KHÔNG keystore).
+# Mục đích: test lỗi thật trên máy — dev cấm build APK local (chi phí disk/network).
+#
+# Tải artifact tại: GitHub repo → Actions → run mới nhất → "Android Debug APK" → Artifacts.
+# Lưu ý: debug APK dùng API_BASE_URL mặc định localhost:8787 — khi test trên máy thật
+# hãy `adb reverse tcp:8787 tcp:8787` với worker local, hoặc đổi dart-define bên dưới.
+
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - "mobile/**"
+      - ".github/workflows/android-debug-apk.yml"
+  workflow_dispatch: {}
+
+concurrency:
+  group: android-debug-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build debug APK (gradle trực tiếp)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # JDK 17 — khớp sourceCompatibility/targetCompatibility trong build.gradle.kts
+      # (bài học chung: Kotlin/AGP metadata phải ghép JDK, không để default JDK 21+).
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      # Gradle cache TRƯỚC khi chạy gradlew — giữ các layer lớn (gradle dist, AGP deps)
+      # giữa các lần chạy để tổng thời gian build ~5-8 phút thay vì 15+ phút cold.
+      - name: Setup Gradle cache
+        uses: gradle/actions/setup-gradle@v4
+
+      # Flutter STABLE pin đúng bản đã dev local (không dùng @latest để tránh
+      # flutter-gradle-plugin đột ngột đổi behavior giữa các lần build).
+      - name: Set up Flutter 3.47.2
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.2
+          channel: stable
+          cache: true
+
+      - name: Pub get
+        working-directory: mobile
+        run: flutter pub get
+
+      # Gradle trực tiếp qua wrapper (task assembleDebug) — đúng yêu cầu
+      # "dùng gradle trực tiếp, không cần token EAS".
+      # dart-defines dạng Flutter chuẩn (comma-separated base64 từng cặp KEY=VALUE):
+      #   APP_ENV=dev (build.gradle.kts chỉ chặn release thiếu production/staging — debug luôn pass)
+      #   SENTRY_DSN  (init runtime, không ảnh hưởng compile)
+      - name: Gradle assembleDebug
+        working-directory: mobile/android
+        run: ./gradlew assembleDebug
+          -Pdart-defines=QVBQX0VOVj1kZXY=,U0VOVFJZX0RTTj1odHRwczovLzA1OTNmNjI3M2YyNTIyYmY1ZTZiYzliYTJhMmM5MWQ5QG80NTA1NDc0MDc3NzUzMzQ0LmluZ2VzdC51cy5zZW50cnkuaW8vNDUxMjA2NjU3Njc3NzIxNg==
+          --stacktrace
+
+      # Renamed trước khi upload để tên file tự giải thích.
+      - name: Rename APK
+        run: mv mobile/build/app/outputs/flutter-apk/app-debug.apk appvantai-debug.apk
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: appvantai-debug-apk
+          path: appvantai-debug.apk
+          retention-days: 14

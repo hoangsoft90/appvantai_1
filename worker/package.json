@@ -1,0 +1,25 @@
+{
+  "name": "appvantai-worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "node scripts/verify_deploy_config.mjs && wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "db:migrate": "wrangler d1 migrations apply appvantai --remote",
+    "db:migrate:local": "wrangler d1 migrations apply appvantai --local",
+    "seed:pilot": "bash scripts/seed_pilot.sh",
+    "pilot:smoke": "bash scripts/pilot_smoke.sh",
+    "pilot:metrics": "wrangler d1 execute appvantai --local --file scripts/pilot_metrics.sql",
+    "verify:deploy": "node scripts/verify_deploy_config.mjs"
+  },
+  "dependencies": {
+    "hono": "^4.6.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.0.0",
+    "typescript": "^5.6.0",
+    "wrangler": "^4.0.0"
+  }
+}

@@ -1,0 +1,11 @@
+# Template — copy thành mobile/android/key.properties (KHÔNG commit file thật,
+# đã có trong android/.gitignore) và tạo keystore:
+#
+#   keytool -genkey -v -keystore ~/appvantai-release.jks -keyalg RSA \
+#     -keysize 2048 -validity 10000 -alias appvantai
+#
+# storeFile có thể là path tuyệt đối hoặc tương đối với android/app/.
+storePassword=CHANGE_ME
+keyPassword=CHANGE_ME
+keyAlias=appvantai
+storeFile=/absolute/path/to/appvantai-release.jks
