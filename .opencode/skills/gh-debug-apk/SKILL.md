@@ -58,6 +58,15 @@ curl -s -H "Authorization: token <TOKEN>" \
 
 ## Bài học build (đã xử lý sẵn trong repo — đừng phá)
 
+- **Push lần đầu lên repo MỚI + workflow có `paths:` filter = KHÔNG trigger** (workflow
+  chưa kịp đăng ký và/hoặc push không chạm file khớp filter). Fix đã kiểm chứng
+  (2026-09-11): commit **chạm chính file workflow** rồi push → run khởi động ngay.
+  Push rỗng (--allow-empty) thì KHÔNG ăn — paths filter bỏ qua vì 0 file đổi.
+- Token dạng URL phải `https://USER:TOKEN@github.com/...` (chỉ token không đủ —
+  git sẽ hỏi password và chết trên shell non-interactive).
+- Kiểm tra run đã lên chưa: GET `/actions/runs` — nếu `total_count=0` sau push có
+  chạm file workflow → kiểm tra `enabled` qua `/actions/permissions` và private/public.
+
 - `mobile/android/gradle/wrapper/gradle-wrapper.jar` + `gradlew` bị Flutter template
   gitignore nhưng **CI bắt buộc phải có** → đã `git add -f`. Nếu thiếu, CI báo
   `Error: Could not find or load main class org.gradle.wrapper.GradleWrapperMain`.
