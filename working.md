@@ -9,7 +9,9 @@ Phase 0–8 done (review result.md: all GO). Release ops 2026-09-11: targetSdk/c
 `mobile/tool/gen_icons.py`), Sentry (`sentry_flutter`, DSN qua dart-define `SENTRY_DSN`),
 GH Actions debug-APK workflow `.github/workflows/android-debug-apk.yml` (Flutter 3.47.2,
 JDK 17, AGP 9.1, gradle trực tiếp) — **GREEN, artifact `appvantai-debug-apk` ~84MB**
-(run 34584725090; run AdMob 34587277648 cũng success). **AdMob tích hợp xong** —
+(run 34584725090; run AdMob 34587277648 cũng success). Debug APK mặc định
+trỏ **API production** (dart-define `API_BASE_URL` trong workflow — cài máy
+thật test được ngay, không cần adb reverse). **AdMob tích hợp xong** —
 flag TEST_ADS (dart-define, mặc định true = test IDs Google), banner Home +
 interstitial sau tạo đơn + App Open (cold start/resume ≥30s); chi tiết
 `.project/modules/ads.md`. Repo pushed to `github.com/hoangsoft90/appvantai_1`

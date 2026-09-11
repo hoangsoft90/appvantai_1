@@ -90,7 +90,12 @@ curl -s -H "Authorization: token <TOKEN>" \
   `Error: Could not find or load main class org.gradle.wrapper.GradleWrapperMain`.
 - dart-defines cho gradle: **comma-separated base64 của từng cặp KEY=VALUE**, truyền qua
   `-Pdart-defines=...` (đúng như Flutter tool làm). Workflow hiện nhúng
-  `APP_ENV=dev` + `SENTRY_DSN` (debug app vẫn init Sentry để test error reporting).
+  `APP_ENV=dev` + `API_BASE_URL=https://appvantai-api.testhoangweb.workers.dev`
+  (backend production — APK cài máy thật test được ngay, không cần adb reverse)
+  + `SENTRY_DSN` (debug app vẫn init Sentry để test error reporting).
+  Muốn test worker local: thay cặp API_BASE_URL bằng base64 của
+  `API_BASE_URL=http://localhost:8787` (python3: `import base64;
+  base64.b64encode(b'API_BASE_URL=http://localhost:8787').decode()`).
 - Release build thiếu `--dart-define=APP_ENV=production|staging` → fail-fast ở Gradle
   (cố ý — fix_p7_1). **Debug build không bị chặn.**
 - `worker/.wrangler/` đã thêm vào root `.gitignore` — đừng commit local D1/KV state.
@@ -99,6 +104,8 @@ curl -s -H "Authorization: token <TOKEN>" \
 
 ## Sau khi build xong (trên máy thật)
 
-- Debug APK dùng `API_BASE_URL` mặc định `http://localhost:8787` → chạy worker local rồi
-  `adb reverse tcp:8787 tcp:8787`, hoặc sửa dart-define trong workflow nếu cần API khác.
+- Debug APK mặc định trỏ **API production** `https://appvantai-api.testhoangweb.workers.dev`
+  (Cloudflare Workers, D1 có seed pilot corridor HN→HP — đơn `notes='pilot'`).
+- Muốn test worker local: sửa dart-define `API_BASE_URL` trong workflow về
+  `http://localhost:8787` + `adb reverse tcp:8787 tcp:8787`.
 - Manifest đã bật `usesCleartextTraffic=true` → HTTP mọi domain chạy được trên máy thật.
