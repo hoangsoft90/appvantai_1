@@ -10,12 +10,13 @@ MVP marketplace chở hàng: **chủ hàng đăng đơn, tài xế đăng chuy�
 detour OSRM ≤15km) thay vì tìm theo bán kính. Chi phí vận hành mục tiêu **0đ/tháng**
 (Cloudflare free tier + OSRM/Nominatim public).
 
-- **Trạng thái (2026-09-10):** Phase 0–5 + plan2_final A–I + plan3 + plan4 xong
-  (verify_all: tsc clean, 85/85 E2E, analyze + 34 Flutter tests green).
-  **Phase 6 Pilot tooling xong** (seed idempotent + smoke 14/14 + metrics SQL +
-  checklist) — chờ pilot thật 1 corridor HN→HP. Tiếp theo: Phase 7 hardening.
-- **Backend:** Cloudflare Worker (Hono + TS) + D1 (migrations 0001–0008) + KV.
-- **Mobile:** Flutter, Riverpod 3 codegen + GoRouter 16, Feature-First.
+- **Trạng thái (2026-09-11):** Phase 0–8 xong (review result.md: all GO; P7 audit
+  fix_p7_1 đã sửa đủ blocker). **Release ops:** CI build debug APK trên GH Actions
+  (GREEN, artifact ~84MB), Sentry + AdMob tích hợp (module `modules/ads.md`).
+  Đang chờ: pilot thật 1 corridor HN→HP + ops Play Console (người vận hành).
+- **Backend:** Cloudflare Worker (Hono + TS) + D1 (migrations 0001–0009) + KV.
+- **Mobile:** Flutter, Riverpod 3 codegen + GoRouter 16, Feature-First;
+  Sentry + AdMob (`google_mobile_ads`), flag TEST_ADS mặc định true.
 
 ## Điều hướng
 

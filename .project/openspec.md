@@ -1,6 +1,6 @@
 # openspec.md — Tiến độ, bug, todo
 
-> Cập nhật 2026-09-10 (sau Phase 6).
+> Cập nhật 2026-09-11 (Phase 7+8 + release ops).
 
 ## Baseline spec (openspec/specs/) — 11 capability, khớp code ĐÃ IMPLEMENT
 
@@ -22,9 +22,10 @@
 | plan2_final A–I hardening | ✅ Xong |
 | plan3_final 6 mục (role lock, GPS active-only, lifecycle UI, match card, maps, production) | ✅ Xong |
 | plan4_final (cancel siết, production guard, role lock business-state, polish 4.1–4.4) | ✅ Xong |
-| **6 — Pilot** | 🟡 **Tooling xong** (seed idempotent 4/4 match, smoke 14/14 PASS, metrics SQL, checklist `docs/pilot_checklist.md`) — **chờ pilot thật** 1 corridor HN→HP |
-| 7 — Production hardening (auth thật, secrets, observability) | ⬜ Sau pilot |
-| 8 — Store / phân phối | ⬜ Cuối |
+| **6 — Pilot** | 🟡 **Tooling xong** (seed idempotent 4/4 match, smoke 14/14 PASS, metrics SQL, checklist `docs/pilot_checklist.md`) — **chờ pilot thật** 1 corridor HN→HP (không chặn P7/P8) |
+| 7 — Production hardening (Firebase auth, env guard fail-fast, release config) | ✅ Xong — audit fix_p7_1 sửa đủ 3 blocker (e2e m1 6/6, m2 11/11, m5 11/11) |
+| 8 — Store / soft launch (legal, icon, version tile, README checklist) | ✅ Code sẵn — ops Play Console/TestFlight chờ người vận hành |
+| Release ops 2026-09-11 (targetSdk 36, Sentry, AdMob, CI debug APK) | ✅ Xong — `modules/ads.md` + `integrations.md` §CI/CD |
 
 ## Bug đã biết (chưa fix — user chốt fix sau baseline)
 

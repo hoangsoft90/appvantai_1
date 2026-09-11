@@ -28,15 +28,35 @@
   `wrangler d1 create` + `kv namespace create` rồi thay ID, secrets qua
   `wrangler secret put JWT_SECRET` (README có đủ deployment procedure).
 
+## AdMob (quảng cáo — thêm 2026-09-11)
+
+- Package `google_mobile_ads ^8.0.0`; chi tiết module: `.project/modules/ads.md`.
+- Flag `TEST_ADS` (dart-define, mặc định `true`) → test IDs Google (luôn fill,
+  không bị AdMob giới hạn); `false` → ID thật app `ca-app-pub-6917313063209470~9914050394`.
+- App ID khai báo trong `AndroidManifest.xml` (`GADApplicationIdentifier`); unit IDs
+  chọn trong `lib/core/config/admob_config.dart` (fail-fast khi production thiếu ID).
+
+## Monitoring — Sentry (Phase 7)
+
+- `sentry_flutter ^9.x`, init trong `main()`; DSN qua dart-define `SENTRY_DSN`
+  (không truyền → tự tắt, dev không gửi). Environment theo `APP_ENV`, release
+  `appvantai_mobile@<APP_VERSION>`.
+
 ## Push notification / Payment / Chat
 
 Chưa có — P1 frozen (anti-overengineering, plan §2.2). Không tích hợp gì thêm
 trước khi pilot pass.
 
-## CI/CD
+## CI/CD — GitHub Actions (2026-09-11)
 
-Chưa có pipeline. Verify thủ công:
-- `cd worker && bash scripts/verify_all.sh` → tsc + 85 E2E + Flutter analyze/test.
-- Pilot: `npm run seed:pilot` → `npm run pilot:smoke` → `npm run pilot:metrics`.
-- Build release: **cấm build Flutter local** (disk-constrained) — user tự build
-  khi cần; Phase 8 (store) sẽ cần pipeline riêng.
+- **Build debug APK trên CI** (không EAS, không keystore, gradle trực tiếp):
+  `.github/workflows/android-debug-apk.yml` — trigger push vào `master` khi
+  `mobile/**` đổi; artifact `appvantai-debug-apk` (~84MB, giữ 14 ngày).
+- Toolchain pinned: Flutter 3.47.2, JDK 17 temurin, AGP 9.1.0, Kotlin 2.4.0,
+  Gradle wrapper 9.3.1, compileSdk/targetSdk **36**.
+- CI PHẢI chạy `dart run build_runner build` sau `pub get` (`*.g.dart` gitignored).
+- Repo: `github.com/hoangsoft90/appvantai_1` (master); token trong
+  `.secrets/gh_token` (gitignored — không commit). Quy trình đầy đủ + bài học:
+  skill `.opencode/skills/gh-debug-apk/SKILL.md`.
+- Verify vẫn giữ chuẩn local (không build APK): `verify_all.sh`, `pilot:smoke`,
+  `flutter analyze/test`. Build release: cấm local — thêm workflow riêng khi ship.

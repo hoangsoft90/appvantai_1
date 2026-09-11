@@ -9,10 +9,13 @@ Phase 0–8 done (review result.md: all GO). Release ops 2026-09-11: targetSdk/c
 `mobile/tool/gen_icons.py`), Sentry (`sentry_flutter`, DSN qua dart-define `SENTRY_DSN`),
 GH Actions debug-APK workflow `.github/workflows/android-debug-apk.yml` (Flutter 3.47.2,
 JDK 17, AGP 9.1, gradle trực tiếp) — **GREEN, artifact `appvantai-debug-apk` ~84MB**
-(run 34584725090). Repo pushed to `github.com/hoangsoft90/appvantai_1` (master);
-token live trong `.secrets/gh_token` (gitignored). 3 bài học CI đã fix lần lượt:
-Groovy-trong-.kts, guard release eagerly-evaluated, thiếu build_runner codegen trên CI
-(chi tiết trong skill `gh-debug-apk`).
+(run 34584725090; run AdMob 34587277648 cũng success). **AdMob tích hợp xong** —
+flag TEST_ADS (dart-define, mặc định true = test IDs Google), banner Home +
+interstitial sau tạo đơn + App Open (cold start/resume ≥30s); chi tiết
+`.project/modules/ads.md`. Repo pushed to `github.com/hoangsoft90/appvantai_1`
+(master); token live trong `.secrets/gh_token` (gitignored). 3 bài học CI đã fix
+lần lượt: Groovy-trong-.kts, guard release eagerly-evaluated, thiếu build_runner
+codegen trên CI (chi tiết trong skill `gh-debug-apk`).
 Local Android SDK/gradle DELETED (2026-09-11) — APK chỉ build trên GH Actions.
 Project knowledge base lives in `.project/` (update it + context.md at session end
 per `.project/ai-rules.md` §2).
