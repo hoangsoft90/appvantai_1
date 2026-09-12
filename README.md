@@ -184,6 +184,10 @@ Chọn động 1 đơn seed còn `posted` nên chạy lại nhiều lần không
   cancel, GPS, empty state, role lock): `docs/pilot_checklist.md`
 - **Hướng dẫn sử dụng cho người dùng cuối** (chủ cửa hàng · tài xế · admin, kèm
   xử lý sự cố theo đúng thông báo trên app): `guide.md`
+- **Bản public gửi cho tài xế / chủ cửa hàng** (đã lọc toàn bộ chi tiết vận hành
+  admin, SQL, số điện thoại): `guide_public.md` → https://share.jotbird.com/soft-steady-prickly-pear
+  (JotBird, hết hạn 11/12/2026 — sửa xong chạy lại lệnh publish trong `README` mục
+  deploy docs hoặc skill `jotbird-publish` để cập nhật cùng slug).
 - Tài khoản seed: driver `0983500001–04`, customer `0983600001–08` (dev OTP).
 
 ```bash

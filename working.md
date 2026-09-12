@@ -4,6 +4,13 @@
 
 ## Current state (2026-09-12)
 
+**`guide_public.md` đã publish (2026-09-12)** — bản guide đã lọc (bỏ §admin SQL/khoá
+tài khoản, số điện thoại admin, URL nội bộ) đăng công khai tại
+**https://share.jotbird.com/soft-steady-prickly-pear** (slug
+`soft-steady-prickly-pear`, visibility `public`, hết hạn **11/12/2026** — free tier).
+Cập nhật sau này: publish lại **kèm `"slug"` cũ** (xem skill `jotbird-publish`) để
+giữ nguyên link, nếu không sẽ tạo doc mới và link cũ chết.
+
 **`guide.md` (mới, root) — hướng dẫn sử dụng cho 3 nhóm người dùng thật** (chủ cửa
 hàng · tài xế · admin), viết từ code đang chạy: login/hồ sơ, đăng đơn & hủy đơn theo
 luật thật, đọc radar (score/lý do/hard rules), liên hệ → gọi điện, nhận chuyến atomic,
