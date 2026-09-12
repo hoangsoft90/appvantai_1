@@ -182,6 +182,8 @@ Chọn động 1 đơn seed còn `posted` nên chạy lại nhiều lần không
 
 - Checklist 11 bước (login 2 vai, tạo đơn, radar, contact, accept, lifecycle,
   cancel, GPS, empty state, role lock): `docs/pilot_checklist.md`
+- **Hướng dẫn sử dụng cho người dùng cuối** (chủ cửa hàng · tài xế · admin, kèm
+  xử lý sự cố theo đúng thông báo trên app): `guide.md`
 - Tài khoản seed: driver `0983500001–04`, customer `0983600001–08` (dev OTP).
 
 ```bash
@@ -273,8 +275,9 @@ chạy. Dev (APP_ENV=dev) không bị ảnh hưởng.
 
 **As-built (đã deploy thật 2026-09-11):**
 
-- URL: `https://appvantai-api.testhoangweb.workers.dev` (account
-  kythuat.hoangweb@gmail.com, version `5c3285ce`)
+- URL: `https://appvantai-api.testhoangweb.workers.dev` (account Cloudflare của
+  chủ dự án — `npx wrangler login`; version `5c3285ce`)
+  ▸ **Repo này public** — không ghi email/token vào tài liệu trong repo.
 - D1 `appvantai` = `99b06c30-…` · KV `APP_KV` = `cab09561-…` (đã điền vào
   wrangler.toml cả dev lẫn [env.production]; id đọc lại bằng
   `wrangler d1 list` / `wrangler kv namespace list`)

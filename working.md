@@ -4,6 +4,15 @@
 
 ## Current state (2026-09-12)
 
+**`guide.md` (mới, root) — hướng dẫn sử dụng cho 3 nhóm người dùng thật** (chủ cửa
+hàng · tài xế · admin), viết từ code đang chạy: login/hồ sơ, đăng đơn & hủy đơn theo
+luật thật, đọc radar (score/lý do/hard rules), liên hệ → gọi điện, nhận chuyến atomic,
+chạy chuyến + GPS, lifecycle, admin xử lý vi phạm bằng SQL/API, bảng tra sự cố theo
+**đúng thông báo trên app**, danh sách hạn chế P0 + phụ lục giới hạn hệ thống.
+⚠️ **Repo public → không ghi email/token vào tài liệu** (đã bỏ email khỏi README).
+Còn 1 rủi ro cần user xử lý trên Google Cloud: **hạn chế API key Android của Firebase
+(google-services.json đang public) theo package + SHA-1** để tránh bị lạm dụng quota SMS.
+
 **Nav audit 2026-09-12** (yêu cầu user: điều hướng linh hoạt, không dead end, safe
 back toàn app, fix deep link, + 4 bug cụ thể):
 - Fix dead route: empty state radar trỏ `/trips` (không tồn tại) → "Về trang chủ".
