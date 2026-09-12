@@ -235,9 +235,15 @@ Pipeline được chứng minh trên dữ liệu corridor seed HN→HP (MAPS_PRO
 3. **Match Card** (plan3 Mục 4): hàng stats rõ ràng — score, "Khỏi tuyến" (pickup_km),
    "Độ lệch" (detour_km, hiện "—" khi null), khối lượng; reasons tối đa 5 dòng;
    nút Liên hệ / Nhận chuyến (chi tiết hành vi thuộc capability `driver-engagement`)
-4. **Empty state** (plan3 Mục 4): khi 0 match hiện gợi ý hành động — nới khung giờ,
-   tạo đơn thử/doi tuyến, khai báo **chiều về** (điều hướng lại trip form khi
-   đang one_way)
+4. **Empty state** (plan3 Mục 4): khi 0 match hiện 3 gợi ý hành động — **"Khai
+   báo chiều về"** (`push /trips/new`), **"Về trang chủ"** (`backOrGo('/home')`),
+   **"Quét lại radar"** (`invalidate` provider). Nav audit 2026-09-12: gợi ý cũ
+   "Mở rộng thời gian lấy hàng" trỏ `'/trips'` — **route không tồn tại** trong
+   registry → go_router ném `GoException: no routes for location` ("Page Not
+   Found"). P0 không có màn lọc khung giờ lấy hàng nên không được hứa hẹn hành
+   động đó; đổi thành lối thoát thật. Nếu sau này làm màn "chuyến của tôi"
+   (`GET /trips` + `TripRepository.listTrips` đã có sẵn nhưng chưa có screen)
+   thì có thể khôi phục gợi ý này đúng nghĩa.
 
 #### Scenario: Driver quét radar thấy match kèm stats
 
@@ -251,6 +257,15 @@ Pipeline được chứng minh trên dữ liệu corridor seed HN→HP (MAPS_PRO
 - **WHEN** màn radar hiển thị
 - **THEN** empty state có gợi ý khai báo chuyến chiều về (và các gợi ý khác), bấm
   được để quay lại form
+
+#### Scenario: Không có gợi ý nào dẫn vào route không tồn tại
+
+- **GIVEN** màn radar đang ở empty state (0 match)
+- **WHEN** bấm lần lượt từng gợi ý
+- **THEN** mỗi gợi ý đi tới route có thật trong registry (`/trips/new`, `/home`)
+  hoặc chỉ refresh tại chỗ — không bao giờ rơi vào màn "Không tìm thấy trang"
+  (khóa bởi `mobile/test/feature/trip/match_card_test.dart` +
+  `mobile/test/feature/nav/navigation_safety_test.dart`)
 
 ## Cần làm rõ
 

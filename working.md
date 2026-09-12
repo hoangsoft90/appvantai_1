@@ -25,8 +25,28 @@ back toàn app, fix deep link, + 4 bug cụ thể):
   + FAB tạo đơn 403 — `POST /orders` requireRole customer); home admin hiện thẻ
   "màn quản trị chưa có" thay vì nút dẫn vào chỗ bị redirect. `/orders/:id` vẫn
   cho admin + tài xế (worker `assertOrderViewAccess` cho admin).
-- Verify: `flutter analyze` sạch · **73/73 test** (60 cũ + 13 mới; file mới
-  `test/feature/nav/navigation_safety_test.dart`).
+- Verify: `flutter analyze` sạch · **77/77 test** (60 cũ + 17 mới).
+
+### Self-review bản nav/role patch (2026-09-12) — đã fix
+
+1. **Spec drift (P1)**: `trip-matching` spec vẫn mô tả empty state "nới khung giờ"
+   → cập nhật đúng 3 gợi ý đang có + scenario "không gợi ý nào dẫn vào route không
+   tồn tại" (spec là SSOT của hành vi ĐÃ implement).
+2. **Doc drift (P2)**: `docs/pilot_checklist.md` bước 10 ghi nhãn cũ ⇒ sửa; bước 4
+   bổ sung kiểm tra bấm SĐT/nút Gọi mở dialer.
+3. **`tel:` URI chưa được test (P2)**: tách `core/utils/phone_dialer.dart`
+   (`telUri()` thuần + `dialPhone()`) + `test/core/phone_dialer_test.dart` khóa
+   chuẩn hoá số (space/gạch/chấm/E.164 `+84`) — URI sai là lỗi im lặng trên máy thật.
+4. **Nút back tự triệt tiêu trên `/vehicle` (P2)**: chế độ bắt buộc khai xe,
+   `SafeBackButton('/home')` bị redirect ngược lại `/vehicle` → bỏ nút khi không
+   phải chế độ sửa (`leading: _isEdit ? SafeBackButton('/profile') : null`).
+5. **Style (P3)**: bỏ `state.extra! as String` thừa.
+
+**Chấp nhận, không sửa (P3)**: `authNotifier` chỉ cập nhật khi `_landing()` đổi,
+nen guard dùng role có thể cũ nếu role đổi giữa phiên mà landing không đổi
+(driver↔customer đều về /home). Hiện **không reachable từ UI** (đổi role chỉ xảy ra
+ở onboarding — luôn kèm đổi landing); sửa sẽ phải đụng vào cơ chế refresh có chọn
+lọc (lý do tồn tại: go_router 16 refresh xóa push stack).
 - Data production hiện tại (read-only check): 15 user (1 admin + 9 customer +
   5 driver), 9 đơn (5 posted + 4 accepted — tài xế thật `0987342124` đã accept 3
   đơn seed + 1 đơn tự tạo), 8 trip (`0987342124`, **2 trip còn `active`** từ

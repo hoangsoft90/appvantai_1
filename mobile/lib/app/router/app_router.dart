@@ -110,7 +110,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/otp',
         builder: (context, state) => OtpScreen(
           // Deep link không kèm extra → redirect về /login (xem redirect ở trên).
-          phone: state.extra is String ? state.extra! as String : '',
+          phone: state.extra is String ? state.extra as String : '',
         ),
       ),
       // Phase 7 §7.5 — legal docs: đọc được từ login (chưa login) và profile.

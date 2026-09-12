@@ -141,7 +141,10 @@ class _VehicleFormScreenState extends ConsumerState<VehicleFormScreen> {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        leading: SafeBackButton(fallback: _isEdit ? '/profile' : '/home'),
+        // CHỈ chế độ sửa mới có nút back (về /profile). Ở chế độ bắt buộc khai
+        // xe (driver mới), back về /home sẽ bị router redirect ngược lại
+        // /vehicle — nút bấm mà không đi đâu cả thì tệ hơn là không có nút.
+        leading: _isEdit ? const SafeBackButton(fallback: '/profile') : null,
         title: Text(_isEdit ? 'Sửa thông tin xe' : 'Thông tin xe'),
       ),
       body: SafeArea(
