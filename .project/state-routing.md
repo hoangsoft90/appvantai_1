@@ -33,9 +33,11 @@
   `/login`, `/otp`, `/legal/terms|privacy`, `/onboarding`, `/vehicle`, `/home`,
   `/profile`, `/orders`, `/orders/new`, `/orders/:orderId`, `/trips/new`,
   `/trips/:tripId/matches`, `/trips/:tripId/run`.
-- **Guard theo vai trò** (deep link): `/orders` + `/orders/new` → chỉ chủ hàng;
-  `/orders/:orderId` → tài xế VẪN vào được (radar mở chi tiết để chạy lifecycle);
-  `/trips*` → chỉ tài xế. Sai vai trò → `/home` (tránh màn gọi API 403).
+- **Guard theo vai trò** (deep link): `/orders` + `/orders/new` → chỉ
+  `role == customer` (`AuthUser.hasOrdersRole`; admin vào chỉ thấy list rỗng +
+  FAB tạo đơn 403 vì `POST /orders` requireRole customer); `/orders/:orderId` →
+  tài xế VẪN vào được (radar mở chi tiết để chạy lifecycle) và admin cũng vào
+  được (`assertOrderViewAccess`); `/trips*` → chỉ tài xế. Sai vai trò → `/home`.
 - **Safe back** (`safe_nav.dart`): `SafeBackButton(fallback:)` làm `leading` của
   mọi màn push được → stack rỗng (deep link) vẫn có nút back về màn cha logic;
   `backOrGo(context, fallback)` cho điều hướng sau mutation (hủy đơn/tạo đơn/lưu xe):

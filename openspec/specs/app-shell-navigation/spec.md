@@ -92,11 +92,13 @@ Mọi route đều phải có đường ra khi được mở **không qua stack 
 redirect) — không tồn tại màn hình mà user bị kẹt. `app_router.dart` + 
 `app/router/safe_nav.dart` **PHẢI**:
 
-1. **Guard theo vai trò** (redirect, `app_router.dart`):
-   - `/orders` (danh sách) + `/orders/new` → chỉ chủ hàng; tài xế bị đưa về `/home`
-     (POST /orders `requireRole customer` → để tài xế vào là chắc chắn 403)
+1. **Guard theo vai trò** (redirect, `app_router.dart`; `AuthUser.hasOrdersRole`):
+   - `/orders` (danh sách) + `/orders/new` → chỉ `role == customer`; tài xế **và
+     admin** bị đưa về `/home` (POST /orders `requireRole customer`; list là "đơn
+     của tôi" nên với admin luôn rỗng + FAB tạo đơn chắc chắn 403)
    - `/orders/:orderId` → **tài xế VẪN vào được** (radar/match card mở chi tiết để
-     chạy lifecycle pickup → in_transit → delivered)
+     chạy lifecycle pickup → in_transit → delivered) và **admin cũng vào được**
+     (worker `assertOrderViewAccess` cho phép admin xem mọi đơn)
    - `/trips*` → chỉ tài xế; chủ hàng/admin bị đưa về `/home`
 2. **`/otp` thiếu `state.extra`** (deep link không kèm phone) → redirect `/login`
    thay vì cast null; route builder dùng `extra is String ? extra : ''`
@@ -142,12 +144,21 @@ redirect) — không tồn tại màn hình mà user bị kẹt. `app_router.dar
    (`roleLabel()` — "Tài xế" / "Chủ hàng" / "Quản trị" kèm icon), mô tả giá trị
    theo vai trò (nav audit 2026-09-12: trước đây `admin` bị hiện nhầm "Chủ hàng")
 4. **CTA chính theo vai trò**: driver → FilledButton "Tôi đang chạy — quét radar"
-   (`push /trips/new`); customer → "Đơn hàng của tôi" (`push /orders`)
+   (`push /trips/new`); customer → "Đơn hàng của tôi" (`push /orders`);
+   **admin → thẻ thông báo "Màn quản trị trong app chưa có ở giai đoạn này"**
+   (không render nút dẫn vào màn mà router sẽ redirect đi — tránh vòng lặp
+   tap → redirect → về home)
 
 #### Scenario: Driver mở home
 
 - **WHEN** driver đã onboarding + có xe, mở `/home`
 - **THEN** thấy CTA "Tôi đang chạy — quét radar" dẫn tới form tạo chuyến
+
+#### Scenario: Admin mở home
+
+- **WHEN** user `role = admin` mở `/home`
+- **THEN** Chip vai trò hiện "Quản trị" (không phải "Chủ hàng") và KHÔNG có nút
+  "Đơn hàng của tôi" — chỉ có thẻ giải thích màn quản trị chưa có trong app
 
 #### Scenario: Customer mở home
 

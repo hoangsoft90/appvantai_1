@@ -64,7 +64,7 @@ class HomeScreen extends ConsumerWidget {
               const SizedBox(height: 16),
               Text(
                 user.isAdmin
-                    ? 'Tài khoản quản trị — theo dõi đơn hàng và xử lý báo cáo vi phạm.'
+                    ? 'Tài khoản quản trị — xử lý báo cáo vi phạm bằng công cụ quản trị.'
                     : user.isDriver
                         ? 'Nhập tuyến đường của bạn, chúng tôi sẽ quét mối hàng tiện đường (radar).'
                         : 'Đăng hàng hoặc theo dõi đơn hàng của bạn.',
@@ -77,6 +77,29 @@ class HomeScreen extends ConsumerWidget {
                   onPressed: () => context.push('/trips/new'),
                   icon: const Icon(Icons.radar),
                   label: const Text('Tôi đang chạy — quét radar'),
+                )
+              else if (user.isAdmin)
+                // Admin không có màn "đơn của tôi" (backend: list = đơn của chính
+                // mình → rỗng; POST orders requireRole customer). Hiện thẻ giải
+                // thích thay vì nút dẫn vào màn rỗng/403.
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.admin_panel_settings_outlined, size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Màn quản trị trong app chưa có ở giai đoạn này — báo cáo vi phạm '
+                            'được xử lý qua công cụ quản trị (xem README §Admin).',
+                            style: theme.textTheme.bodySmall,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 )
               else
                 FilledButton.icon(

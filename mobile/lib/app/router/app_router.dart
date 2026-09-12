@@ -88,13 +88,15 @@ final routerProvider = Provider<GoRouter>((ref) {
         // Nav audit 2026-09-12: route thuộc vai trò khác thì đưa về home —
         // không để deep link dẫn user vào màn hình gọi API chắc chắn 403.
         //  - /orders (danh sách) + /orders/new: chỉ chủ hàng (POST /orders
-        //    requireRole customer).
+        //    requireRole customer; list là "đơn của tôi" nên vô nghĩa với
+        //    tài xế/admin — để vào chỉ thấy danh sách rỗng + nút tạo đơn 403).
         //  - /orders/:id (chi tiết): tài xế VẪN vào được — radar (match card)
-        //    mở chi tiết đơn để chạy lifecycle pickup → in_transit → delivered.
+        //    mở chi tiết đơn để chạy lifecycle pickup → in_transit → delivered;
+        //    admin cũng vào được (worker `assertOrderViewAccess` cho admin).
         //  - /trips*: chỉ tài xế.
         final onOrdersList = location == '/orders' || location == '/orders/new';
         final onTrips = location == '/trips' || location.startsWith('/trips/');
-        if (isDriver && onOrdersList) return '/home';
+        if (!user.hasOrdersRole && onOrdersList) return '/home';
         if (!isDriver && onTrips) return '/home';
       }
       return null;

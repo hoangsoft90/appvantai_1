@@ -100,6 +100,11 @@ class AuthUser {
   bool get isActive => status == 'active';
   bool get isDriver => role == 'driver';
   bool get isAdmin => role == 'admin';
+
+  /// Vai trò được dùng màn "Đơn hàng của tôi" (danh sách + tạo đơn) — backend
+  /// `POST /orders` requireRole customer; tài xế/admin vào chỉ thấy list rỗng
+  /// và nút tạo đơn 403 (nav audit 2026-09-12).
+  bool get hasOrdersRole => role == 'customer';
   bool get needsOnboarding => name.trim().isEmpty;
   bool get hasLegalConsent => legalConsentAt != null;
 

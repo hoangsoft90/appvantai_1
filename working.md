@@ -20,8 +20,17 @@ back toàn app, fix deep link, + 4 bug cụ thể):
 - Bug phụ phát hiện khi audit: tài xế mở chi tiết đơn `posted` (từ radar) ĐÃ thấy
   nút "Hủy đơn hàng" — hủy là quyền CHỦ HÀNG (worker `lifecycle.ts` actor:
   customer) → đã gate lại `canCancel = isCustomer && canCancelOrder(status)`.
-- Verify: `flutter analyze` sạch · **71/71 test** (60 cũ + 11 mới; file mới
+- Admin (D1 verify 2026-09-12: `0363930250` role **admin**, 1 row, không trùng số
+  `+84`): guard `/orders` + `/orders/new` là **customer-only** (admin vào list rỗng
+  + FAB tạo đơn 403 — `POST /orders` requireRole customer); home admin hiện thẻ
+  "màn quản trị chưa có" thay vì nút dẫn vào chỗ bị redirect. `/orders/:id` vẫn
+  cho admin + tài xế (worker `assertOrderViewAccess` cho admin).
+- Verify: `flutter analyze` sạch · **73/73 test** (60 cũ + 13 mới; file mới
   `test/feature/nav/navigation_safety_test.dart`).
+- Data production hiện tại (read-only check): 15 user (1 admin + 9 customer +
+  5 driver), 9 đơn (5 posted + 4 accepted — tài xế thật `0987342124` đã accept 3
+  đơn seed + 1 đơn tự tạo), 8 trip (`0987342124`, **2 trip còn `active`** từ
+  phiên test 11/09) — cần dọn nếu muốn số liệu pilot sạch (xem §Traps #14).
 
 ## Current state (2026-09-11)
 
@@ -182,6 +191,13 @@ matches the shell command itself (self-kill trap).
    (`0…`) — đã normalize 2 phía (worker `/auth/firebase` + mobile `toE164`).
    Nếu tạo user mới bằng số `+84…` trước bản fix thì tồn tại **2 row tách rời**;
    kiểm tra `SELECT phone, role FROM users WHERE phone LIKE '%363930250'`.
+14. **Trip `active` mồ côi làm bẩn pilot + khóa role**: màn "Đang chạy" chỉ gửi
+   GPS khi screen đang mở (provider bị dispose khi rời màn → timer chết → không
+   có tracking nền), nhưng status trên server vẫn `active` → `pilot_metrics.sql`
+   đếm sai "active trips" và `assertRoleChangeAllowed` chặn đổi role
+   (`trips WHERE status IN ('planned','active')`). Dọn: mở lại màn chuyến đó bấm
+   "Kết thúc chuyến", hoặc SQL `UPDATE trips SET status='ended', ended_at=...`
+   khi chắc chắn không còn phiên chạy thật.
 
 ## Definition of done (per task)
 

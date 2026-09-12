@@ -199,5 +199,29 @@ void main() {
 
     expect(find.text('Quản trị'), findsOneWidget);
     expect(find.text('Chủ hàng'), findsNothing);
+    // Admin không có màn "đơn của tôi" (backend customer-only) → không có nút
+    // dẫn vào danh sách rỗng / form tạo đơn 403.
+    expect(find.text('Đơn hàng của tôi'), findsNothing);
+    expect(find.textContaining('Màn quản trị trong app chưa có'), findsOneWidget);
+  });
+
+  testWidgets('admin deep link vào /orders → về home (không vào màn rỗng + FAB 403)',
+      (tester) async {
+    await _pumpLoggedIn(tester, role: 'admin', name: 'Quản Trị Viên');
+
+    await _deepLink(tester, '/orders');
+
+    expect(find.text('Đơn hàng của tôi'), findsNothing);
+    expect(find.text('Quản trị'), findsOneWidget);
+  });
+
+  testWidgets('admin VẪN mở được chi tiết đơn (/orders/:id — backend cho admin xem)',
+      (tester) async {
+    final orders = await _pumpLoggedIn(tester, role: 'admin', name: 'Quản Trị Viên');
+    orders.orders.add(FakeTripRepository.emptyOrder('o9'));
+
+    await _deepLink(tester, '/orders/o9');
+
+    expect(find.text('Chi tiết đơn hàng'), findsOneWidget);
   });
 }
