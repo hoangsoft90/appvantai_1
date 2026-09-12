@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
+import '../../../../app/router/safe_nav.dart';
 import '../../../../shared/services/api_exception.dart';
 import '../../../auth/application/auth_controller.dart';
 import '../../../auth/data/auth_repository.dart';
@@ -57,7 +58,10 @@ class ProfileScreen extends ConsumerWidget {
     final vehicle = user.vehicle;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Hồ sơ của tôi')),
+      appBar: AppBar(
+        leading: const SafeBackButton(fallback: '/home'),
+        title: const Text('Hồ sơ của tôi'),
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -77,9 +81,14 @@ class ProfileScreen extends ConsumerWidget {
           Card(
             child: ListTile(
               leading: Icon(
-                user.isDriver ? Icons.local_shipping : Icons.inventory_2_outlined,
+                user.isAdmin
+                    ? Icons.admin_panel_settings_outlined
+                    : user.isDriver
+                        ? Icons.local_shipping
+                        : Icons.inventory_2_outlined,
               ),
-              title: Text(user.isDriver ? 'Tài xế' : 'Chủ hàng'),
+              // Nav audit 2026-09-12: admin trước đây bị hiện nhầm "Chủ hàng".
+              title: Text(roleLabel(user.role)),
             ),
           ),
           // Phase 8 §8.3 — version app + legal docs xem được mọi lúc từ Hồ sơ.

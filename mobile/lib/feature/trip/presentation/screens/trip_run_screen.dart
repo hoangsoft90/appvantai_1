@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/router/safe_nav.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../shared/services/location_service.dart';
 import '../../application/trip_controller.dart';
@@ -117,7 +118,10 @@ class _TripRunScreenState extends ConsumerState<TripRunScreen> {
     ref.watch(tripRunControllerProvider(widget.tripId));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Chuyến của tôi')),
+      appBar: AppBar(
+        leading: const SafeBackButton(fallback: '/home'),
+        title: const Text('Chuyến của tôi'),
+      ),
       body: tripAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Lỗi: $e')),

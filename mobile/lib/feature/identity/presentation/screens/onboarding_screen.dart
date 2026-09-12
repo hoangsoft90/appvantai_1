@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../shared/services/api_exception.dart';
 import '../../../auth/data/auth_repository.dart';
 import '../../../auth/application/auth_controller.dart';
+import '../../../auth/domain/auth_models.dart';
 
 /// Onboarding (Phase 1 — Identity): nhập tên + chọn vai trò.
 /// Lưu xong → AuthController.applyUser → router tự chuyển:
@@ -42,9 +43,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
     setState(() => _submitting = true);
     try {
-      var user = await ref
-          .read(authRepositoryProvider)
-          .updateMe(name: _nameController.text.trim(), role: _role);
+      // Tài khoản quản trị (seed sẵn ở D1) KHÔNG gửi role trong onboarding —
+      // PATCH /me chấp nhận đổi sang driver|customer nên sẽ tự giáng quyền admin.
+      final current = ref.read(authControllerProvider).value;
+      final isAdmin = current is AuthAuthenticated && current.user.isAdmin;
+      var user = await ref.read(authRepositoryProvider).updateMe(
+            name: _nameController.text.trim(),
+            role: isAdmin ? null : _role,
+          );
       // Legal disclaimer (§18): ghi nhận thời gian tick + IP (audit ở backend)
       if (!user.hasLegalConsent) {
         user = await ref.read(authRepositoryProvider).giveLegalConsent();

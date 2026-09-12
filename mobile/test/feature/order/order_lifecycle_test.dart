@@ -102,12 +102,12 @@ void main() {
     await tester.pumpAndSettle();
 
     Future<void> openDetail() async {
-      // Đi thẳng route /orders (focus test = lifecycle buttons trên detail,
-      // không phải nút home nằm dưới fold của ListView lazy)
+      // Đi THẲNG route chi tiết đơn (focus test = lifecycle buttons trên detail).
+      // Nav audit 2026-09-12: danh sách /orders là màn của chủ hàng — tài xế bị
+      // redirect về /home, nên tài xế chỉ vào được chi tiết qua /orders/:id
+      // (đúng như radar/match card mở chi tiết đơn).
       final ctx = tester.element(find.byType(Scaffold).first);
-      GoRouter.of(ctx).go('/orders');
-      await tester.pumpAndSettle();
-      await tester.tap(find.textContaining('KCN Quế Võ'));
+      GoRouter.of(ctx).go('/orders/o1');
       await tester.pumpAndSettle();
     }
 

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
+import '../../../../app/router/safe_nav.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../shared/services/api_exception.dart';
 import '../../../../shared/services/ads_service.dart';
@@ -196,7 +196,7 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
       // Interstitial tại chuyển cảnh tự nhiên (đăng hàng xong) — fire-and-forget:
       // ads là phụ trợ, navigation không được chặn/kẹt nếu ad chưa load hay lỗi.
       AdsService.instance.showInterstitial();
-      context.go('/orders');
+      backOrGo(context, '/orders');
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _errorMessage = e.message);
@@ -215,7 +215,10 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Tạo đơn hàng')),
+      appBar: AppBar(
+        leading: const SafeBackButton(fallback: '/orders'),
+        title: const Text('Tạo đơn hàng'),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
@@ -409,6 +412,9 @@ class _OrderFormScreenState extends ConsumerState<OrderFormScreen> {
             controller: controller,
             textInputAction: TextInputAction.search,
             decoration: _dec(label, 'Nhập rồi bấm tìm'),
+            // Hiện lỗi ngay khi user gõ và tự MẤT khi nhập đủ 3 ký tự — không
+            // bắt user bấm "Đăng đơn hàng" mới thấy/chịu lỗi địa chỉ.
+            autovalidateMode: AutovalidateMode.onUserInteraction,
             validator: (v) {
               if ((v ?? '').trim().length < 3) return 'Nhập địa chỉ ít nhất 3 ký tự';
               return null;

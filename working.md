@@ -2,6 +2,27 @@
 
 > Commands, verification workflow, and environment traps. Read once, follow always.
 
+## Current state (2026-09-12)
+
+**Nav audit 2026-09-12** (yêu cầu user: điều hướng linh hoạt, không dead end, safe
+back toàn app, fix deep link, + 4 bug cụ thể):
+- Fix dead route: empty state radar trỏ `/trips` (không tồn tại) → "Về trang chủ".
+- Match card: SĐT chủ hàng là **nút bấm được** + nút "Gọi" → `url_launcher` tel:
+  (dep mới `url_launcher ^6.3.0`, `<queries>` scheme tel trong AndroidManifest).
+- `app/router/safe_nav.dart` (mới): `SafeBackButton` (leading mọi màn push được —
+  stack rỗng vẫn back được) + `backOrGo` (pop nếu có stack, else go fallback) +
+  `RouteNotFoundScreen` làm `errorBuilder` (hết "Page Not Found: GoException").
+- Router guard vai trò + `/otp` thiếu extra → `/login` (hết crash cast null).
+- Vai trò `admin` hiển thị đúng "Quản trị" (`roleLabel` + `AuthUser.isAdmin`);
+  onboarding không gửi `role` khi user là admin (tránh tự giáng quyền).
+- Validate địa chỉ: `AutovalidateMode.onUserInteraction` → lỗi hiện khi gõ và tự
+  mất khi đủ 3 ký tự (order form + trip form).
+- Bug phụ phát hiện khi audit: tài xế mở chi tiết đơn `posted` (từ radar) ĐÃ thấy
+  nút "Hủy đơn hàng" — hủy là quyền CHỦ HÀNG (worker `lifecycle.ts` actor:
+  customer) → đã gate lại `canCancel = isCustomer && canCancelOrder(status)`.
+- Verify: `flutter analyze` sạch · **71/71 test** (60 cũ + 11 mới; file mới
+  `test/feature/nav/navigation_safety_test.dart`).
+
 ## Current state (2026-09-11)
 
 Phase 0–8 done (review result.md: all GO). Release ops 2026-09-11: targetSdk/compileSdk
@@ -153,6 +174,14 @@ matches the shell command itself (self-kill trap).
 11. **`.project/` and root doc files are volatile** — lost once in a disk
    cleanup (2026-09-10). Before recreating, `ls` first; `.project/ai-rules.md`
    §2 defines the update protocol.
+12. **Wrangler CLI mất quyền (2026-09-12)**: mọi lệnh `--remote` trả
+   `code: 7403 — account not valid or not authorized`. User cần
+   `npx wrangler login` lại trước khi agent query/deploy D1 production.
+   (Backend đang chạy bình thường — chỉ mất quyền CLI, không phải lỗi app.)
+13. **SĐT Firebase vs D1 seed**: Firebase trả E.164 (`+84…`), app/DB dùng nội địa
+   (`0…`) — đã normalize 2 phía (worker `/auth/firebase` + mobile `toE164`).
+   Nếu tạo user mới bằng số `+84…` trước bản fix thì tồn tại **2 row tách rời**;
+   kiểm tra `SELECT phone, role FROM users WHERE phone LIKE '%363930250'`.
 
 ## Definition of done (per task)
 

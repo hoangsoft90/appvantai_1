@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/router/safe_nav.dart';
 import '../../../../shared/widgets/async_view.dart';
 import '../../../../shared/widgets/empty_view.dart';
 import '../../application/order_list_controller.dart';
@@ -17,7 +18,11 @@ class OrderListScreen extends ConsumerWidget {
     final ordersAsync = ref.watch(orderListControllerProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Đơn hàng của tôi')),
+      appBar: AppBar(
+        // Deep link /orders → stack rỗng, nút back mặc định biến mất = điểm chết.
+        leading: const SafeBackButton(fallback: '/home'),
+        title: const Text('Đơn hàng của tôi'),
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.push('/orders/new'),
         icon: const Icon(Icons.add),

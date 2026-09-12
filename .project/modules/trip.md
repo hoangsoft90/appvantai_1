@@ -16,6 +16,20 @@ Driver khai chuyến A→B (one_way / return chiều về) bằng geocode search
 | `POST /trips/:id/end` | active → ended + xóa KV location |
 | `POST /trips/:id/location` | **chỉ active** — planned → 400 `TRIP_NOT_ACTIVE` (plan3 Mục 3); throttle 30s, KV TTL 2h |
 
+## Liên hệ chủ hàng (nav audit 2026-09-12)
+
+Match card → "Liên hệ chủ hàng" gọi `POST /orders/:id/contact` (§17 — số chỉ lộ
+SAU khi contact). Dialog: **số điện thoại là nút bấm được** (InkWell, vẫn
+select/copy) + nút "Gọi" → `url_launcher` mở dialer `tel:<số>` (số đã được
+strip ký tự lạ). Đã có số rồi (re-tap) → mở thẳng dialog, KHÔNG gọi lại API.
+Lỗi platform (máy không có app gọi điện) → SnackBar kèm số, không bao giờ chặn UI.
+Android cần `<queries>` scheme `tel` trong AndroidManifest (Android 11+), thiếu là
+nút "Gọi" im lặng.
+
+Empty state radar: gợi ý cũ "Mở rộng thời gian lấy hàng" trỏ `/trips` — route
+KHÔNG tồn tại → "Page Not Found". Đã thay bằng "Về trang chủ" (`backOrGo`): P0
+không có màn lọc khung giờ nên không được hứa thứ không làm được.
+
 ## Match response (contract card đọc)
 
 `score`, `subtotal`, `detour_km` (nullable), `pickup_km`, `reasons[]`, `order{…}`
@@ -27,8 +41,9 @@ Không. Radar/compile luôn gọi API; GPS qua `LocationService` (geolocator).
 
 ## Files
 
-`feature/trip/…`: form (geocode + segmented chiều), `trip_matches_screen` (stats +
-empty state 3 gợi ý), `trip_run_screen` + `TripRunController` (xin quyền → gửi GPS
+`feature/trip/…`: form (geocode + segmented chiều + autovalidate địa chỉ),
+`trip_matches_screen` (stats + empty state 3 gợi ý + dialog gọi điện),
+`trip_run_screen` + `TripRunController` (xin quyền → gửi GPS
 ngay + Timer 30s; end offline-safe pending "chưa sync" + retry; `reconcile()` khi
 app reopen trả ReconcileResult + banner quyền) · backend `routes/trips.ts`,
 `services/trips.ts`, `matching.ts`, `gps.ts`, `route_cache.ts`, `maps/*`.

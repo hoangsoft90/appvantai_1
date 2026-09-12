@@ -51,16 +51,23 @@ class HomeScreen extends ConsumerWidget {
               const SizedBox(height: 8),
               Chip(
                 avatar: Icon(
-                  user.isDriver ? Icons.local_shipping : Icons.inventory_2_outlined,
+                  user.isAdmin
+                      ? Icons.admin_panel_settings_outlined
+                      : user.isDriver
+                          ? Icons.local_shipping
+                          : Icons.inventory_2_outlined,
                   size: 18,
                 ),
-                label: Text(user.isDriver ? 'Tài xế' : 'Chủ hàng'),
+                // Nav audit 2026-09-12: admin trước đây bị hiện nhầm "Chủ hàng".
+                label: Text(roleLabel(user.role)),
               ),
               const SizedBox(height: 16),
               Text(
-                user.isDriver
-                    ? 'Nhập tuyến đường của bạn, chúng tôi sẽ quét mối hàng tiện đường (radar).'
-                    : 'Đăng hàng hoặc theo dõi đơn hàng của bạn.',
+                user.isAdmin
+                    ? 'Tài khoản quản trị — theo dõi đơn hàng và xử lý báo cáo vi phạm.'
+                    : user.isDriver
+                        ? 'Nhập tuyến đường của bạn, chúng tôi sẽ quét mối hàng tiện đường (radar).'
+                        : 'Đăng hàng hoặc theo dõi đơn hàng của bạn.',
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.outline),
               ),

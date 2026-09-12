@@ -99,6 +99,7 @@ class AuthUser {
 
   bool get isActive => status == 'active';
   bool get isDriver => role == 'driver';
+  bool get isAdmin => role == 'admin';
   bool get needsOnboarding => name.trim().isEmpty;
   bool get hasLegalConsent => legalConsentAt != null;
 
@@ -120,6 +121,14 @@ class AuthUser {
         'status': status,
       };
 }
+
+/// Nhãn hiển thị vai trò (nav audit 2026-09-12): UI trước đây chỉ phân biệt
+/// driver/customer nên tài khoản `admin` bị hiện nhầm thành "Chủ hàng".
+String roleLabel(String role) => switch (role) {
+      'driver' => 'Tài xế',
+      'admin' => 'Quản trị',
+      _ => 'Chủ hàng',
+    };
 
 class AuthSession {
   const AuthSession({required this.token, required this.user});

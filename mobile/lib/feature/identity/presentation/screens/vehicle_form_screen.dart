@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/router/safe_nav.dart';
 import '../../../../shared/services/api_exception.dart';
 import '../../../auth/application/auth_controller.dart';
 import '../../../auth/data/auth_repository.dart';
@@ -115,7 +116,9 @@ class _VehicleFormScreenState extends ConsumerState<VehicleFormScreen> {
       }
       if (!mounted) return;
       if (_isEdit) {
-        context.pop(); // từ /profile → quay lại hồ sơ
+        // từ /profile → quay lại hồ sơ; deep link /vehicle (stack rỗng) thì
+        // điều hướng về /profile thay vì pop() rơi vào hư không.
+        backOrGo(context, '/profile');
       } else {
         context.go('/home'); // từ onboarding → vào home
       }
@@ -137,7 +140,10 @@ class _VehicleFormScreenState extends ConsumerState<VehicleFormScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(_isEdit ? 'Sửa thông tin xe' : 'Thông tin xe')),
+      appBar: AppBar(
+        leading: SafeBackButton(fallback: _isEdit ? '/profile' : '/home'),
+        title: Text(_isEdit ? 'Sửa thông tin xe' : 'Thông tin xe'),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),

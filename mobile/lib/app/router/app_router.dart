@@ -17,6 +17,7 @@ import '../../feature/order/presentation/screens/order_list_screen.dart';
 import '../../feature/trip/presentation/screens/trip_form_screen.dart';
 import '../../feature/trip/presentation/screens/trip_matches_screen.dart';
 import '../../feature/trip/presentation/screens/trip_run_screen.dart';
+import 'safe_nav.dart';
 
 /// Nơi user "bắt buộc phải ở" theo trạng thái auth:
 ///  - chưa đăng nhập → /login
@@ -52,6 +53,9 @@ final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/home',
     refreshListenable: authNotifier,
+    // Deep link không khớp route nào → màn hình tiếng Việt có nút về home
+    // (mặc định go_router chỉ hiện "Page Not Found: GoException ...").
+    errorBuilder: (context, state) => RouteNotFoundScreen(uri: state.uri.toString()),
     redirect: (context, state) {
       final auth = authNotifier.value;
       final loggedIn = auth is AuthAuthenticated;
@@ -62,6 +66,10 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       if (!loggedIn && !onAuthPage && !onLegalPage) return '/login';
       if (loggedIn && onAuthPage) return _landing(auth)!;
+
+      // Deep link thẳng vào /otp mà không kèm phone (state.extra) → không có
+      // gì để xác thực (trước đây cast cứng `extra as String` gây crash).
+      if (location == '/otp' && state.extra is! String) return '/login';
 
       if (loggedIn) {
         final user = auth.user;
@@ -76,6 +84,18 @@ final routerProvider = Provider<GoRouter>((ref) {
         // (Khi tài xế đã có xe, /vehicle là chế độ sửa — không redirect đi.)
         if (isDriver && !hasVehicle && !onVehicle) return '/vehicle';
         if (!isDriver && onVehicle) return _landing(auth)!;
+
+        // Nav audit 2026-09-12: route thuộc vai trò khác thì đưa về home —
+        // không để deep link dẫn user vào màn hình gọi API chắc chắn 403.
+        //  - /orders (danh sách) + /orders/new: chỉ chủ hàng (POST /orders
+        //    requireRole customer).
+        //  - /orders/:id (chi tiết): tài xế VẪN vào được — radar (match card)
+        //    mở chi tiết đơn để chạy lifecycle pickup → in_transit → delivered.
+        //  - /trips*: chỉ tài xế.
+        final onOrdersList = location == '/orders' || location == '/orders/new';
+        final onTrips = location == '/trips' || location.startsWith('/trips/');
+        if (isDriver && onOrdersList) return '/home';
+        if (!isDriver && onTrips) return '/home';
       }
       return null;
     },
@@ -86,7 +106,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/otp',
-        builder: (context, state) => OtpScreen(phone: state.extra as String),
+        builder: (context, state) => OtpScreen(
+          // Deep link không kèm extra → redirect về /login (xem redirect ở trên).
+          phone: state.extra is String ? state.extra! as String : '',
+        ),
       ),
       // Phase 7 §7.5 — legal docs: đọc được từ login (chưa login) và profile.
       GoRoute(

@@ -86,6 +86,50 @@ Phạm vi: Mobile (`mobile/lib/app/{app,router/app_router}.dart`,
 - **WHEN** `logout()` đổi AuthState sang unauthenticated
 - **THEN** `_landing()` đổi → router notify → redirect `/login`
 
+### Requirement: Deep link & lối thoát an toàn (nav audit 2026-09-12)
+
+Mọi route đều phải có đường ra khi được mở **không qua stack nội bộ** (deep link /
+redirect) — không tồn tại màn hình mà user bị kẹt. `app_router.dart` + 
+`app/router/safe_nav.dart` **PHẢI**:
+
+1. **Guard theo vai trò** (redirect, `app_router.dart`):
+   - `/orders` (danh sách) + `/orders/new` → chỉ chủ hàng; tài xế bị đưa về `/home`
+     (POST /orders `requireRole customer` → để tài xế vào là chắc chắn 403)
+   - `/orders/:orderId` → **tài xế VẪN vào được** (radar/match card mở chi tiết để
+     chạy lifecycle pickup → in_transit → delivered)
+   - `/trips*` → chỉ tài xế; chủ hàng/admin bị đưa về `/home`
+2. **`/otp` thiếu `state.extra`** (deep link không kèm phone) → redirect `/login`
+   thay vì cast null; route builder dùng `extra is String ? extra : ''`
+3. **Deep link không khớp route** → `errorBuilder` render `RouteNotFoundScreen`
+   (tiếng Việt + nút "Về trang chủ") — không lộ `GoException` trần
+4. **`SafeBackButton`** (`safe_nav.dart`) là `leading` của mọi màn push được:
+   có stack → `BackButton` mặc định; stack rỗng (deep link) → IconButton dẫn về
+   `fallback` của màn đó (`/home`, `/orders`, `/login`, `/profile`, …)
+5. **`backOrGo(context, fallback)`** dùng cho điều hướng sau mutation
+   (hủy đơn, tạo đơn, lưu xe): còn stack → `pop()` (giữ stack), hết stack → `go(fallback)`
+   — thay cho `pop()` trần ("nothing to pop") và `go()` luôn (xóa stack)
+6. **Onboarding không gửi `role` khi user hiện tại là `admin`** — `PATCH /me` chỉ
+   nhận driver|customer nên sẽ tự giáng quyền quản trị
+
+#### Scenario: Deep link vào route của vai trò khác
+
+- **GIVEN** tài xế đã đăng nhập
+- **WHEN** mở `/orders` (danh sách đơn của chủ hàng)
+- **THEN** router redirect về `/home`; mở `/orders/:id` thì vẫn vào được chi tiết
+
+#### Scenario: Deep link lạc đường
+
+- **GIVEN** user đang ở bất kỳ màn nào
+- **WHEN** mở `/duong-dan-khong-ton-tai`
+- **THEN** hiện "Không tìm thấy trang" + nút "Về trang chủ" dẫn về `/home`
+  (không hiện `GoException`)
+
+#### Scenario: Màn mở bằng deep link vẫn back được
+
+- **GIVEN** user mở `/orders` bằng deep link (stack rỗng)
+- **WHEN** màn danh sách render
+- **THEN** AppBar vẫn có nút back (`SafeBackButton`) và bấm vào đưa về `/home`
+
 ### Requirement: Home screen role-aware
 
 `HomeScreen` (`mobile/lib/feature/home/presentation/screens/home_screen.dart:13-66`)
@@ -95,7 +139,8 @@ Phạm vi: Mobile (`mobile/lib/app/{app,router/app_router}.dart`,
 2. AppBar: tên app "App Vận Tải" + icon hồ sơ (`push /profile`) + icon đăng xuất
    (`logout()`)
 3. Body: icon radar, lời chào (name rỗng → hiện SĐT), Chip vai trò
-   ("Tài xế"/"Chủ hàng" kèm icon), mô tả giá trị theo vai trò
+   (`roleLabel()` — "Tài xế" / "Chủ hàng" / "Quản trị" kèm icon), mô tả giá trị
+   theo vai trò (nav audit 2026-09-12: trước đây `admin` bị hiện nhầm "Chủ hàng")
 4. **CTA chính theo vai trò**: driver → FilledButton "Tôi đang chạy — quét radar"
    (`push /trips/new`); customer → "Đơn hàng của tôi" (`push /orders`)
 
@@ -142,9 +187,9 @@ Phạm vi: Mobile (`mobile/lib/app/{app,router/app_router}.dart`,
    `ApiException` — khi lỗi là ApiException, text hiển thị dạng
    `ApiException(400, CODE): <message VN>` thay vì chỉ message. UI vẫn dùng được
    nhưng hơi kỹ thuật. Sửa để extract `message` khi là ApiException hay chấp nhận?
-2. **`/otp` nhận phone qua `state.extra as String`** (cast cứng) — pattern này từng
-   gây cast lỗi với `/vehicle` khi redirect rebuild; `/otp` chỉ vào từ login flow
-   trực tiếp nên hiện an toàn, nhưng cùng class rủi ro go_router 16. Chấp nhận?
+2. **`/otp` nhận phone qua `state.extra`** — ✅ ĐÃ GIẢI QUYẾT (nav audit
+   2026-09-12): bỏ cast cứng, deep link thiếu extra → redirect `/login`; có test
+   `navigation_safety_test.dart` khóa hành vi.
 3. **Home driver chưa có shortcut tới danh sách chuyến** — `GET /trips` + trip
    detail/run screen tồn tại nhưng chỉ vào được qua flow tạo chuyến mới → radar;
    không có màn "chuyến của tôi" từ home. Đúng phạm vi P0 hay cần thêm entry?

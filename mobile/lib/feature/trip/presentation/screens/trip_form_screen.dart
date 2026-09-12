@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/router/safe_nav.dart';
 import '../../../../shared/services/api_exception.dart';
 import '../../data/trip_repository.dart';
 import '../../domain/trip_models.dart';
@@ -120,7 +121,9 @@ class _TripFormScreenState extends ConsumerState<TripFormScreen> {
       final trip = await ref.read(tripRepositoryProvider).createTrip(draft);
       if (!mounted) return;
       // Quét radar ngay sau khi tạo chuyến (plan §4.1: 1 chạm bắt đầu).
-      context.push('/trips/${trip.id}/matches');
+      // pushReplacement: thay form bằng màn radar — back từ radar về /home,
+      // không quay lại form đã submit (tránh tạo trùng chuyến).
+      context.pushReplacement('/trips/${trip.id}/matches');
     } on ApiException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -135,7 +138,10 @@ class _TripFormScreenState extends ConsumerState<TripFormScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Tạo chuyến đi')),
+      appBar: AppBar(
+        leading: const SafeBackButton(fallback: '/home'),
+        title: const Text('Tạo chuyến đi'),
+      ),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -211,6 +217,8 @@ class _TripFormScreenState extends ConsumerState<TripFormScreen> {
               labelText: label,
               border: const OutlineInputBorder(),
             ),
+            // Hiện lỗi ngay khi user gõ và tự MẤT khi nhập đủ 3 ký tự.
+            autovalidateMode: AutovalidateMode.onUserInteraction,
             validator: (v) {
               if ((v ?? '').trim().length < 3) return 'Nhập địa chỉ ít nhất 3 ký tự';
               return null;

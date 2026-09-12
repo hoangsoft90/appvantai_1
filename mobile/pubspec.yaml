@@ -49,6 +49,8 @@ dependencies:
   # AdMob — kiếm tiền ads (banner/interstitial/app-open). Unit IDs chọn
   # test/real qua dart-define TEST_ADS (mặc định true) trong admob_config.dart.
   google_mobile_ads: ^8.0.0
+  # Gọi điện trực tiếp cho chủ hàng/tài xế sau khi đã "Liên hệ" (tel: dialer).
+  url_launcher: ^6.3.0
 
 dev_dependencies:
   flutter_test:

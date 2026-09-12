@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../app/router/safe_nav.dart';
+
 /// Phase 7 §7.5 — Điều khoản sử dụng & Chính sách riêng tư (nội dung tối thiểu).
 /// Nội dung tĩnh trong app (không cần server/Pages) — 0đ, hoạt động offline.
 /// Render mini: '# ' → heading lớn, '## ' → heading vừa, còn lại là đoạn văn
@@ -138,7 +140,12 @@ class LegalDocScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(title)),
+      appBar: AppBar(
+        // Legal docs là trang public: mở bằng deep link (stack rỗng) vẫn phải có
+        // đường ra → /login (router tự đưa user đã đăng nhập về landing).
+        leading: const SafeBackButton(fallback: '/login'),
+        title: Text(title),
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

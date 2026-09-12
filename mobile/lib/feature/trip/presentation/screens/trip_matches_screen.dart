@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../app/router/safe_nav.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../shared/services/api_exception.dart';
 import '../../../../shared/widgets/async_view.dart';
@@ -23,6 +25,7 @@ class TripMatchesScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
+        leading: const SafeBackButton(fallback: '/home'),
         title: const Text('Mối hàng tiện đường'),
         actions: [
           IconButton(
@@ -70,11 +73,14 @@ class TripMatchesScreen extends ConsumerWidget {
                         subtitle: const Text('Thêm chuyến ngược chiều để bắt hàng chiều về'),
                         onTap: () => context.push('/trips/new'),
                       ),
+                      // Nav audit 2026-09-12: trước đây trỏ vào '/trips' — route
+                      // KHÔNG tồn tại → "Page Not Found (GoException)". Không có
+                      // màn lọc khung giờ trong P0 nên thay bằng lối thoát thật.
                       ListTile(
-                        leading: const Icon(Icons.schedule),
-                        title: const Text('Mở rộng thời gian lấy hàng'),
-                        subtitle: const Text('Đơn có khung giờ rộng dễ khớp hơn'),
-                        onTap: () => context.push('/trips'),
+                        leading: const Icon(Icons.home_outlined),
+                        title: const Text('Về trang chủ'),
+                        subtitle: const Text('Tạm chưa có mối — quay lại sau hoặc tạo chuyến khác'),
+                        onTap: () => backOrGo(context, '/home'),
                       ),
                       ListTile(
                         leading: const Icon(Icons.refresh),
@@ -131,33 +137,80 @@ class _MatchCardState extends ConsumerState<_MatchCard> {
         _contacting = false;
       });
       // Hiện số điện thoại chủ hàng (§17) — không public trước khi contact (§18)
-      await showDialog<void>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Liên hệ chủ hàng'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(info.name),
-              const SizedBox(height: 8),
-              SelectableText(info.phone, style: Theme.of(ctx).textTheme.titleLarge),
-              const SizedBox(height: 4),
-              Text('Gọi điện hoặc nhắn để thống nhất nhận chuyến.',
-                  style: Theme.of(ctx).textTheme.bodySmall),
-            ],
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Đóng')),
-          ],
-        ),
-      );
+      await _showContactDialog(info);
     } on ApiException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
     } finally {
       if (mounted) setState(() => _contacting = false);
     }
+  }
+
+  /// Dialog liên hệ: **số điện thoại là nút bấm được**, bấm số (hoặc nút "Gọi")
+  /// → mở app điện thoại với đúng số đó (tel:). Đã có số rồi thì mở thẳng dialog,
+  /// không gọi lại API contact (§17 — contact chỉ để lộ số 1 lần).
+  Future<void> _showContactDialog(ContactInfo info) {
+    return showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Liên hệ chủ hàng'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(info.name),
+            const SizedBox(height: 8),
+            // Nút "số điện thoại": bấm vào là gọi luôn, vẫn select/copy được.
+            InkWell(
+              onTap: () => _dial(ctx, info.phone),
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.phone, size: 20, color: Theme.of(ctx).colorScheme.primary),
+                    const SizedBox(width: 8),
+                    SelectableText(
+                      info.phone,
+                      style: Theme.of(ctx).textTheme.titleLarge,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text('Gọi điện hoặc nhắn để thống nhất nhận chuyến.',
+                style: Theme.of(ctx).textTheme.bodySmall),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Đóng')),
+          FilledButton.icon(
+            onPressed: () => _dial(ctx, info.phone),
+            icon: const Icon(Icons.call, size: 18),
+            label: const Text('Gọi'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Mở app điện thoại (dialer) với [phone]. Không bao giờ chặn UI: máy không có
+  /// app gọi điện / lỗi platform → SnackBar kèm số để user tự bấm.
+  Future<void> _dial(BuildContext context, String phone) async {
+    final cleaned = phone.replaceAll(RegExp(r'[^0-9+]'), '');
+    final messenger = ScaffoldMessenger.of(context);
+    if (cleaned.isEmpty) return;
+    try {
+      final ok = await launchUrl(Uri(scheme: 'tel', path: cleaned));
+      if (ok) return;
+    } catch (_) {
+      // rơi xuống thông báo bên dưới
+    }
+    messenger.showSnackBar(
+      SnackBar(content: Text('Không mở được ứng dụng gọi điện — số: $phone')),
+    );
   }
 
   Future<void> _accept(OrderRepository repo, CargoOrder order) async {
@@ -276,8 +329,16 @@ class _MatchCardState extends ConsumerState<_MatchCard> {
                   child: OutlinedButton.icon(
                     onPressed: _contacting
                         ? null
-                        : () => _contact(
-                            ref.read(orderRepositoryProvider), order),
+                        : () {
+                            // Đã có số → mở thẳng dialog (có nút Gọi);
+                            // chưa có → gọi API contact rồi mở dialog.
+                            final known = _contactInfo;
+                            if (known != null) {
+                              _showContactDialog(known);
+                            } else {
+                              _contact(ref.read(orderRepositoryProvider), order);
+                            }
+                          },
                     icon: _contacting
                         ? const SizedBox(
                             width: 16,

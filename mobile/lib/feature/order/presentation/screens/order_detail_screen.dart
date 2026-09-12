@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
+import '../../../../app/router/safe_nav.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../shared/services/api_exception.dart';
 import '../../../../shared/widgets/async_view.dart';
@@ -60,7 +60,9 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
     try {
       await ref.read(orderRepositoryProvider).cancelOrder(order.id);
       ref.invalidate(orderListControllerProvider);
-      if (context.mounted) context.go('/orders');
+      // Hủy xong: pop về danh sách nếu đang có stack, ngược lại (deep link)
+      // điều hướng về /orders — không để user ở lại màn đơn đã hủy.
+      if (context.mounted) backOrGo(context, '/orders');
     } on ApiException catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
@@ -172,17 +174,23 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
   Widget build(BuildContext context) {
     final orderAsync = ref.watch(orderDetailProvider(orderId));
     return Scaffold(
-      appBar: AppBar(title: const Text('Chi tiết đơn hàng')),
+      appBar: AppBar(
+        leading: const SafeBackButton(fallback: '/orders'),
+        title: const Text('Chi tiết đơn hàng'),
+      ),
       body: AsyncView<CargoOrder>(
         value: orderAsync,
         onRetry: () => ref.invalidate(orderDetailProvider(orderId)),
         builder: (order) {
           final theme = Theme.of(context);
-          final canCancel = canCancelOrder(order.status);
           final auth = ref.watch(authControllerProvider).value;
           final currentUser = auth is AuthAuthenticated ? auth.user : null;
           final isCustomer = currentUser?.role == 'customer';
           final isDriver = currentUser?.role == 'driver';
+          // Hủy đơn là quyền của CHỦ HÀNG (worker `lifecycle.ts` RULES.cancel
+          // actor: customer). Tài xế mở chi tiết đơn từ radar KHÔNG được thấy
+          // nút này — bấm vào chỉ nhận 403 (nav audit 2026-09-12).
+          final canCancel = isCustomer && canCancelOrder(order.status);
           final showSafety = isCustomer && order.hasDriver;
           // plan3 Mục 2: mỗi trạng thái chỉ hiện đúng 1 action hợp lệ.
           final lifecycle = nextLifecycleAction(status: order.status, isDriver: isDriver);

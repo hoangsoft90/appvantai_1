@@ -63,5 +63,12 @@
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
         </intent>
+        <!-- url_launcher (2026-09): bấm số điện thoại đối tác → mở dialer.
+             Android 11+ chặn query/launch intent không khai báo → phải có
+             block này, nếu không nút "Gọi" im lặng không làm gì. -->
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="tel"/>
+        </intent>
     </queries>
 </manifest>

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/router/safe_nav.dart';
 import '../../../../shared/services/api_exception.dart';
 import '../../../../shared/services/logger.dart';
 import '../../application/auth_controller.dart';
@@ -85,7 +86,11 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Xác thực OTP')),
+      appBar: AppBar(
+        // Vào từ login thì back về login; deep link lạc vào /otp vẫn có lối ra.
+        leading: const SafeBackButton(fallback: '/login'),
+        title: const Text('Xác thực OTP'),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),

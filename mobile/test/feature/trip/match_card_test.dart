@@ -1,3 +1,4 @@
+import 'package:appvantai_mobile/feature/order/data/order_repository.dart';
 import 'package:appvantai_mobile/feature/trip/data/trip_repository.dart';
 import 'package:appvantai_mobile/feature/trip/domain/trip_models.dart';
 import 'package:appvantai_mobile/feature/trip/presentation/screens/trip_matches_screen.dart';
@@ -5,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../helpers/fake_order_repository.dart';
 import '../../helpers/fake_trip_repository.dart';
 
 void main() {
@@ -38,7 +40,42 @@ void main() {
     expect(tester.widgetList(find.byIcon(Icons.check_circle_outline)).length, greaterThanOrEqualTo(3));
   });
 
-  testWidgets('empty state có gợi ý hành động (khai chiều về / mở rộng giờ / quét lại)', (tester) async {
+  testWidgets('bấm "Liên hệ chủ hàng" → dialog có SĐT bấm được + nút Gọi',
+      (tester) async {
+    final trips = FakeTripRepository();
+    final orders = FakeOrderRepository()
+      ..orders.add(FakeTripRepository.emptyOrder('m1'));
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          tripRepositoryProvider.overrideWithValue(trips),
+          orderRepositoryProvider.overrideWithValue(orders),
+        ],
+        child: const MaterialApp(home: TripMatchesScreen(tripId: 't1')),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.textContaining('Liên hệ chủ hàng'));
+    await tester.pumpAndSettle();
+
+    // Nav audit 2026-09-12: số điện thoại là nút bấm được, dialog có nút "Gọi"
+    // (mở dialer qua tel:) — không còn chỉ là text chết.
+    expect(find.text('0912000001'), findsOneWidget);
+    expect(find.widgetWithText(FilledButton, 'Gọi'), findsOneWidget);
+    expect(find.byIcon(Icons.phone), findsOneWidget);
+
+    // Bấm "Gọi": trong test không có dialer thật nên `launchUrl` hoặc trả
+    // false (→ SnackBar có số) hoặc thành công ảo — quan trọng là KHÔNG crash
+    // và dialog vẫn dùng được (lỗi platform không bao giờ chặn UI).
+    await tester.tap(find.widgetWithText(FilledButton, 'Gọi'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.text('Liên hệ chủ hàng'), findsOneWidget);
+    expect(find.text('0912000001'), findsOneWidget);
+  });
+
+  testWidgets('empty state có gợi ý hành động (khai chiều về / về home / quét lại)', (tester) async {
     final trips = FakeTripRepository()..matchesByTrip['t-empty'] = const [];
     await tester.pumpWidget(
       ProviderScope(
@@ -51,7 +88,9 @@ void main() {
     expect(find.text('Chưa có mối phù hợp trên tuyến này'), findsOneWidget);
     // 3 gợi ý hành động theo plan3 Mục 4
     expect(find.text('Khai báo chiều về'), findsOneWidget);
-    expect(find.text('Mở rộng thời gian lấy hàng'), findsOneWidget);
+    // Nav audit 2026-09-12: gợi ý cũ trỏ '/trips' (route không tồn tại →
+    // "Page Not Found") đã thay bằng lối thoát thật về home.
+    expect(find.text('Về trang chủ'), findsOneWidget);
     expect(find.text('Quét lại radar'), findsOneWidget);
   });
 
